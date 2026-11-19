@@ -1,0 +1,42 @@
+name: Build unsigned IPA
+
+# 每次推到 main 分支或手动触发时，在云端 Mac 上编译出未签名 IPA。
+# 不需要证书、不需要开发者账号；产物在 Actions 页面下载。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 16
+        run: |
+          if [ -d /Applications/Xcode_16.2.app ]; then
+            sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+          else
+            sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          fi
+          xcodebuild -version
+
+      - name: Build unsigned IPA
+        run: bash build-ipa.sh
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PodsStats-unsigned-ipa
+          path: build/PodsStats.ipa
+          if-no-files-found: error
+
+      - name: Publish IPA to Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${{ github.run_number }}" build/PodsStats.ipa --title "PodsStats build ${{ github.run_number }}" --notes "未签名 IPA，用 AltStore 安装。" --latest
+
