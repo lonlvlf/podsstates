@@ -936,31 +936,84 @@
         if(!m) return NaN;
         return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]).getTime();
       }
+      function healthDeviceName(attrs){
+        /* 健康导出的 sourceName 是手机/手表名，真正的耳机名在 device 属性里：
+           <HKDevice: ...>, name:AirPods Pro, manufacturer:Apple Inc., ... */
+        if(attrs.device){
+          var d=attrs.device.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&amp;/g,"&");
+          var m=/name:(.+?), manufacturer:/.exec(d) || /name:([^,]+)/.exec(d);
+          if(m && m[1].trim()) return m[1].trim();
+        }
+        return (attrs.sourceName||"").trim() || "耳机";
+      }
       function parseHealthXml(text){
-        var added=0, skipped=0;
-        var seen={};
-        S.sessions.forEach(function(s){ seen[s.start+"|"+s.end+"|"+s.device]=1; });
-        var tagRe=/<Record\b[^>]*>/g, m;
-        while((m=tagRe.exec(text))!==null){
-          var tag=m[0];
-          if(tag.indexOf("HeadphoneAudioExposure")===-1) continue;
+        /* 只扫描含 HeadphoneAudioExposure 的 Record 标签：导出文件可达几百 MB，
+           逐条正则匹配全部 Record 会慢到手机卡死。 */
+        var needle="HeadphoneAudioExposure";
+        var samples=[], invalid=0, pos=0;
+        while(true){
+          var i=text.indexOf(needle, pos);
+          if(i===-1) break;
+          var ts=text.lastIndexOf("<Record", i);
+          if(ts===-1){ pos=i+needle.length; continue; }
+          var te=text.indexOf(">", ts);
+          if(te===-1) break;
+          pos=te+1;
+          if(te-ts>4000) continue;
+          var tag=text.slice(ts, te+1);
+          if(tag.indexOf(needle)===-1) continue;
           var attrs={};
           var aRe=/(\w+)="([^"]*)"/g, a;
           while((a=aRe.exec(tag))!==null) attrs[a[1]]=a[2];
+          if(!attrs.type || attrs.type.indexOf(needle)===-1) continue;
           var start=parseHealthDate(attrs.startDate), end=parseHealthDate(attrs.endDate);
-          if(isNaN(start)||isNaN(end)||end<=start) { skipped++; continue; }
-          var dev=getOrCreateDevice(attrs.sourceName || "耳机");
-          var key=start+"|"+end+"|"+dev.id;
-          if(seen[key]){ skipped++; continue; }
-          seen[key]=1;
+          if(isNaN(start)||isNaN(end)||end<=start){ invalid++; continue; }
           var vol=null;
-          if(attrs.type && attrs.type.indexOf("Quantity")!==-1 && attrs.value!=null){
+          if(attrs.value!=null){
             var v=parseFloat(attrs.value); if(!isNaN(v)) vol=Math.round(v*10)/10;
           }
-          S.sessions.push({ id:uid(), device:dev.id, start:start, end:end, vol:vol });
-          added++;
+          samples.push({ start:start, end:end, vol:vol, devName:healthDeviceName(attrs) });
         }
-        return { added:added, skipped:skipped };
+        /* 健康里是一段段几秒到几分钟的采样，相邻采样（间隔 ≤5 分钟）合并成一次佩戴，
+           音量按时长加权平均；否则佩戴次数会被采样数淹没。 */
+        var byDev={};
+        samples.forEach(function(s){
+          if(!byDev[s.devName]) byDev[s.devName]=[];
+          byDev[s.devName].push(s);
+        });
+        var seen={};
+        S.sessions.forEach(function(s){ seen[s.start+"|"+s.end+"|"+s.device]=1; });
+        var added=0, skipped=invalid, GAP=5*60000;
+        Object.keys(byDev).forEach(function(name){
+          var list=byDev[name].sort(function(x,y){ return x.start-y.start; });
+          var dev=null, cur=null;
+          function flush(){
+            if(!cur) return;
+            if(!dev) dev=getOrCreateDevice(name);
+            var key=cur.start+"|"+cur.end+"|"+dev.id;
+            if(seen[key]){ skipped++; }
+            else{
+              seen[key]=1;
+              S.sessions.push({ id:uid(), device:dev.id, start:cur.start, end:cur.end,
+                vol: cur.volD>0? Math.round(cur.volW/cur.volD*10)/10 : null });
+              added++;
+            }
+            cur=null;
+          }
+          list.forEach(function(s){
+            var d=(s.end-s.start)/60000;
+            if(cur && s.start-cur.end<=GAP){
+              if(s.end>cur.end) cur.end=s.end;
+              if(s.vol!=null){ cur.volW+=s.vol*d; cur.volD+=d; }
+            }else{
+              flush();
+              cur={ start:s.start, end:s.end, volW:0, volD:0 };
+              if(s.vol!=null){ cur.volW+=s.vol*d; cur.volD+=d; }
+            }
+          });
+          flush();
+        });
+        return { added:added, skipped:skipped, samples:samples.length };
       }
       function importHealth(file){
         var status=document.getElementById("import-status");
@@ -972,7 +1025,9 @@
               var r=parseHealthXml(text);
               save();
               if(r.added>0){
-                status.textContent="导入完成：新增 "+r.added+" 条记录"+(r.skipped? "，跳过 "+r.skipped+" 条（重复或无效）":"")+"。";
+                status.textContent="导入完成：新增 "+r.added+" 条聆听记录"
+                  +(r.samples>r.added? "（由 "+r.samples+" 条耳机采样合并）":"")
+                  +(r.skipped? "，跳过 "+r.skipped+" 条（重复或无效）":"")+"。";
                 toast("导入了 "+r.added+" 条聆听记录");
                 setTimeout(function(){ closeSheets(); view="today"; detailId=null; render(); }, 900);
               }else{
@@ -987,12 +1042,25 @@
         if(/\.zip$/i.test(file.name)){
           if(typeof JSZip==="undefined"){ status.textContent="解压组件没加载成功（可能没网），请解压后选里面的 export.xml。"; return; }
           JSZip.loadAsync(file).then(function(zip){
-            var target=null;
+            /* 主数据文件名随系统语言变：英文 export.xml、中文「导出.xml」；
+               包里还有 export_cda.xml（临床文档格式，没有 Record 记录），绝不能选它。 */
+            var xmls=[];
             zip.forEach(function(path, entry){
-              if(!target && /(^|\/)export\.xml$/i.test(path)) target=entry;
+              if(!entry.dir && /\.xml$/i.test(path)) xmls.push(entry);
             });
-            if(!target){ zip.forEach(function(path, entry){ if(!target && /\.xml$/i.test(path)) target=entry; }); }
-            if(!target){ status.textContent="压缩包里没找到 export.xml。"; return; }
+            function baseName(e){ return (e.name||"").split("/").pop().toLowerCase(); }
+            function usize(e){ try{ return (e._data && e._data.uncompressedSize) || 0; }catch(_){ return 0; } }
+            var mains=xmls.filter(function(e){ return baseName(e).indexOf("cda")===-1; });
+            var target=null;
+            for(var k=0;k<mains.length;k++){
+              var b=baseName(mains[k]);
+              if(b==="export.xml" || b==="导出.xml"){ target=mains[k]; break; }
+            }
+            if(!target && mains.length){
+              mains.sort(function(x,y){ return usize(y)-usize(x); });
+              target=mains[0];
+            }
+            if(!target){ status.textContent="压缩包里没找到健康数据文件（export.xml / 导出.xml）。"; return; }
             target.async("string").then(done, fail);
           }, fail);
         }else{
