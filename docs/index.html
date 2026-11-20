@@ -15,7 +15,7 @@
          见 CSS 里 .wrap 上方的注释。 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Pods Stats" />
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=38","background_color":"%230d1626","theme_color":"%230d1626"}' />
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=39","background_color":"%230d1626","theme_color":"%230d1626"}' />
     <!-- 主屏幕 App 会把旧页面缓存得很死：明确要求不缓存，让布局修正能真正下发到已添加的图标 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -36,7 +36,7 @@
           (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
         if(!standalone) return;
         document.documentElement.classList.add("ios-standalone");
-        var BUILD_V = "38";
+        var BUILD_V = "39";
         try{
           var u = new URL(window.location.href);
           if(u.searchParams.get("v") !== BUILD_V){
@@ -408,6 +408,12 @@
          不然画布只剩一条、模型被压扁（探针实测） */
       .hero-stage.has3d{height:272px;padding-top:10px;padding-bottom:10px}
       .hero-stage.on3d .hero-enter{display:none}
+      /* 3D 落地阴影：平面图的阴影来自图片自带的 drop-shadow，3D 画布没有，
+         模型放大居中后底部又离原来的小阴影太远，看着像飘在空中。3D 生效
+         时把原有的静态阴影椭圆加宽加深、贴到模型底部正下方——固定不动，
+         不呼吸、不跟随旋转（画布在它上方、透明底，阴影透过画布可见）。 */
+      .feat-card.on3d .feat-shadow{width:68%;height:30px;bottom:-2px;opacity:.88;background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.66), rgba(0,0,0,0) 68%);filter:blur(5px)}
+      .hero-stage.on3d .hero-shadow{width:62%;height:32px;bottom:0;opacity:.88;background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.66), rgba(0,0,0,0) 68%);filter:blur(5px)}
       .gl-credit{display:none;font-size:10.5px;color:var(--faint);letter-spacing:.02em;margin-top:5px;text-align:center}
       .feat-card.on3d .gl-credit{display:block}
       .detail-rise.on3d .gl-credit{display:block}
@@ -752,7 +758,10 @@
       "use strict";
       /* ---------- 数据 ---------- */
       var LS_KEY = "podsStatsApp.v1";
-      var S = load();
+      /* 注意：S 的初始化在 BT_PID / KNOWN_MODELS 两张表和 backfillDevices
+         定义之后（见下方「var S = load();」）。load() 会调 resolveProduct
+         查那两张表，若在这里就调，表还没赋值、抛错被 catch 吞掉，冷启动
+         时存量设备会全部读不出来。 */
       function load(){
         try{
           var raw = localStorage.getItem(LS_KEY);
@@ -943,6 +952,9 @@
         });
         ensureUniqueNames(d.devices||[]);
       }
+
+      /* 两张表与 backfill 都已就绪，这里才真正读存量数据（见 LS_KEY 下方注释） */
+      var S = load();
 
       /* ---------- 工具 ---------- */
       function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
@@ -1788,10 +1800,26 @@
           var bb=new THREE.Box3().setFromObject(pose);
           var size=new THREE.Vector3(); bb.getSize(size);
           var c=new THREE.Vector3(); bb.getCenter(c);
-          var maxDim=Math.max(size.x, size.y, size.z)||1;
-          var s=2.35/maxDim;
+          /* 放大贴合：旧算法 s=2.35/maxDim 是按包围盒最大边归一的——摆正
+             旋转让轴对齐包围盒膨胀约三成，模型反而缩了一圈，在宽画布里
+             只占中间一小块。改成按相机视锥的可见尺寸贴合（系数按
+             实体轮廓标定，见下方），哪边先到顶听哪边。tiltF 把默认
+             俯仰 .12 的投影增高（高 + 深·sin）算进去。 */
+          var dist=camera.position.length();
+          var visH=2*dist*Math.tan(camera.fov*Math.PI/360);
+          var aspect=(box.clientWidth>0 && box.clientHeight>0)? box.clientWidth/box.clientHeight : 1.4;
+          var visW=visH*aspect;
+          var tiltF=Math.cos(.12)+(size.z/Math.max(size.y,.0001))*Math.sin(.12);
+          /* 系数按实测轮廓定的：摆正后包围盒四角是空的（盒身斜纹转正，
+             角落没有实体），实体轮廓只有包围盒的约八成——390px 实测
+             .94 贴合时实体只占画布高约 71%、看着小。放大到 1.10 档后
+             实体约占高九成、宽约五成，和平面产品图的 presence 一致，
+             且包围盒空角先出画、实体不裁切。 */
+          var s=Math.min(1.10*visH/(Math.max(size.y,.0001)*tiltF), 1.06*visW/Math.max(size.x,.0001));
           pose.scale.setScalar(s);
-          pose.position.set(-c.x*s, -c.y*s, -c.z*s);
+          /* 整体下移 0.10：实体轮廓在包围盒里偏上，不下移盒底会离底部
+             阴影一截、看着飘；下移后盒底正落在静态阴影上。 */
+          pose.position.set(-c.x*s, -c.y*s-.10, -c.z*s);
           group.add(pose);
           view.ready=true;
           /* 模型到位才藏平面图、亮署名；没到位前平面图一直都在 */
