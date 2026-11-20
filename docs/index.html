@@ -11,15 +11,35 @@
     <!-- 状态栏用不透明黑：black-translucent 会让页面钻到状态栏底下，iOS 的顶部磨砂/滚动边缘处理会把正好在那片区域的大标题和日期一起虚掉；黑色状态栏自带一块不透明区域，内容永远从它下方开始，与页面近黑的顶部背景衔接无痕 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Pods Stats" />
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=19","background_color":"%230d1626","theme_color":"%230d1626"}' />
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=31","background_color":"%230d1626","theme_color":"%230d1626"}' />
     <!-- 主屏幕 App 会把旧页面缓存得很死：明确要求不缓存，让布局修正能真正下发到已添加的图标 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <script>
-      /* iOS 主屏幕模式检测（display-mode 媒体查询之外的兜底）：standalone 时给
-         html 加类，CSS 据此把页头整体下压，离开顶部磨砂带。必须在渲染前跑。 */
-      if (window.navigator && navigator.standalone) document.documentElement.classList.add("ios-standalone");
+      /* iOS 主屏幕（standalone）处理，必须在渲染前跑：
+         1) 给 html 加类，CSS 据此用固定小间隙（不叠加 safe-area，理由见
+            .wrap 注释：状态栏是不透明黑，系统已留好它的区域，叠加就是
+            双重计算、页头上方空出一块）。
+         2) 缓存自救：主屏幕 App 没有刷新按钮，旧 HTML 缓存很顽固。
+            若当前地址还没带本版版本号参数，就一次性换到带参数的地址，
+            绕开旧缓存条目；参数本身即防循环条件，换完就不再跳。
+            聆听记录按域名存在 localStorage 里，换参数不影响数据。 */
+      (function(){
+        var standalone = (window.navigator && navigator.standalone) ||
+          (window.matchMedia && matchMedia("(display-mode: standalone)").matches) ||
+          (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
+        if(!standalone) return;
+        document.documentElement.classList.add("ios-standalone");
+        var BUILD_V = "31";
+        try{
+          var u = new URL(window.location.href);
+          if(u.searchParams.get("v") !== BUILD_V){
+            u.searchParams.set("v", BUILD_V);
+            window.location.replace(u.toString());
+          }
+        }catch(e){}
+      })();
     </script>
     <link rel="icon" href="data:," />
     <title>Pods Stats · 耳机聆听统计</title>
@@ -73,14 +93,21 @@
       .bg-orbs::after{content:"";position:absolute;inset:0;background:radial-gradient(118% 92% at 50% 44%, rgba(0,0,0,0) 58%, rgba(3,6,13,.42) 100%)}
       button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]){min-height:2.25rem}
       button{font:inherit;cursor:pointer}
-      /* Top offset: status bar is opaque black (see meta above), so content
-         already starts below it — only a small breathing gap is needed.
-         Bottom clears the floating tab bar. */
-      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 18px calc(204px + env(safe-area-inset-bottom))}
+      /* Top offset: the status bar is opaque black (see meta above) and iOS
+         already reserves its area in standalone — the viewport starts below
+         it. Adding env(safe-area-inset-top) on top counts that same area
+         twice (59pt on Dynamic Island phones): browser mode has inset 0,
+         so the web page looked right at 14px while standalone computed
+         18+59=77px and left a blank band above the header. The top gap is
+         therefore a fixed small value in every mode, never inset-derived.
+         (No 96px rule exists anywhere anymore; a phone still showing the
+         old tall gap is running a cached pre-fix shell — see the version
+         self-check in the head script.) Bottom keeps its inset. */
+      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:14px 18px calc(204px + env(safe-area-inset-bottom))}
       @media (display-mode:standalone),(display-mode:fullscreen){
-        .wrap{padding-top:calc(18px + env(safe-area-inset-top))}
+        .wrap{padding-top:12px}
       }
-      html.ios-standalone .wrap{padding-top:calc(18px + env(safe-area-inset-top))}
+      html.ios-standalone .wrap{padding-top:12px}
       /* ——— Small brand header (PodHours language): 44px rounded-square icon +
          modest wordmark, lots of air. No big title at the top of the screen. ——— */
       .brand{display:flex;align-items:center;gap:11px;margin-bottom:22px;position:relative;z-index:2;animation:fadeIn var(--dur) var(--ease) both}
