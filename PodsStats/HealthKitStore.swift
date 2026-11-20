@@ -2,15 +2,14 @@
 // 数据层：向 HealthKit 申请授权、读取耳机聆听数据、合并为聆听片段并汇总统计。
 //
 // 数据来源说明（已按 Apple HealthKit 文档核对）：
-// - 耳机聆听数据使用 HKCategoryTypeIdentifier.headphoneAudioExposure（iOS 14+）。
-//   每条样本是一条 HKCategorySample，startDate/endDate 标出一段聆听时间。
+// - 耳机聆听数据使用 HKQuantityTypeIdentifier.headphoneAudioExposure（iOS 14+）。
+//   每条样本是一条 HKQuantitySample，quantity 单位 dBASPL
+//   （HKUnit.decibelAWeightedSoundPressureLevel()），startDate/endDate 标出一段聆听时间。
 //   注意：Apple 官方把这类样本定义为“耳机音频暴露”记录，Health App 用它绘制
 //   “耳机音频音量”。本 App 把样本起止时间当作聆听时段来统计，因此所有
 //   由样本合并得到的数字（次数、平均每次、最长一次）都在界面上标注“估算”，
 //   与原版 App 的做法一致。
-// - 音量：样本 metadata 中可能带有 HKMetadataKeyAudioExposureLevel（单位 dBASPL）。
-//   该 metadata 并非每条样本都有；读不到时平均音量显示为“—”，不编造数字。
-//   代码里用字符串键读取 metadata，避免因常量名差异导致编译失败。
+// - 音量：直接取样本 quantity 的 dB 值；读不到时平均音量显示为“—”，不编造数字。
 // - 设备：样本的 HKDevice（name / manufacturer / model）标识耳机；
 //   取不到 HKDevice 时回退到样本 sourceRevision.source.name。
 // - 会话合并：相邻样本间隔 ≤ 10 分钟视为同一次聆听（见 sessionGapSeconds）。
@@ -54,8 +53,8 @@ final class HealthKitStore: ObservableObject {
     private let healthStore = HKHealthStore()
     private let calendar = Calendar.current
 
-    private var headphoneExposureType: HKCategoryType? {
-        HKObjectType.categoryType(forIdentifier: .headphoneAudioExposure)
+    private var headphoneExposureType: HKQuantityType? {
+        HKObjectType.quantityType(forIdentifier: .headphoneAudioExposure)
     }
 
     var isHealthDataAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
@@ -136,7 +135,7 @@ final class HealthKitStore: ObservableObject {
 
     // MARK: - HealthKit 查询
 
-    private func fetchSamples(type: HKCategoryType, from start: Date, to end: Date) async -> [HKCategorySample] {
+    private func fetchSamples(type: HKQuantityType, from start: Date, to end: Date) async -> [HKQuantitySample] {
         let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
         return await withCheckedContinuation { continuation in
@@ -146,7 +145,7 @@ final class HealthKitStore: ObservableObject {
                     continuation.resume(returning: [])
                     return
                 }
-                continuation.resume(returning: (samples as? [HKCategorySample]) ?? [])
+                continuation.resume(returning: (samples as? [HKQuantitySample]) ?? [])
             }
             healthStore.execute(query)
         }
@@ -155,7 +154,7 @@ final class HealthKitStore: ObservableObject {
     // MARK: - 会话合并与汇总（纯函数，便于测试与复用）
 
     /// 把原始样本按时间排序，相邻间隔 ≤ sessionGapSeconds 的合并为一次聆听。
-    static func mergeSessions(from samples: [HKCategorySample]) -> [ListeningSession] {
+    nonisolated static func mergeSessions(from samples: [HKQuantitySample]) -> [ListeningSession] {
         let sorted = samples.sorted { $0.startDate < $1.startDate }
         var sessions: [ListeningSession] = []
         var currentStart: Date?
@@ -178,12 +177,12 @@ final class HealthKitStore: ObservableObject {
         for sample in sorted {
             let device = sample.device
             let name = device?.name ?? sample.sourceRevision.source.name
-            let volume = (sample.metadata?["HKMetadataKeyAudioExposureLevel"] as? NSNumber)?.doubleValue
+            let volume = sample.quantity.doubleValue(for: HKUnit.decibelAWeightedSoundPressureLevel())
             if let s = currentStart, let e = currentEnd {
                 if sample.startDate.timeIntervalSince(e) <= sessionGapSeconds {
                     // 同一次聆听：延长结束时间，累计音量
                     currentEnd = max(e, sample.endDate)
-                    if let volume { volumes.append(volume) }
+                    volumes.append(volume)
                     continue
                 } else {
                     flush()
@@ -194,14 +193,14 @@ final class HealthKitStore: ObservableObject {
             currentDeviceName = name
             currentManufacturer = device?.manufacturer
             currentModelCode = device?.model
-            volumes = volume.map { [$0] } ?? []
+            volumes = [volume]
         }
         flush()
         return sessions
     }
 
     /// 某一天的统计。
-    static func dayStats(for day: Date, sessions: [ListeningSession]) -> DayStats {
+    nonisolated static func dayStats(for day: Date, sessions: [ListeningSession]) -> DayStats {
         let calendar = Calendar.current
         let dayStart = calendar.startOfDay(for: day)
         let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
@@ -231,7 +230,7 @@ final class HealthKitStore: ObservableObject {
     }
 
     /// 按设备汇总。
-    static func summarizeDevices(sessions: [ListeningSession]) -> [DeviceStats] {
+    nonisolated static func summarizeDevices(sessions: [ListeningSession]) -> [DeviceStats] {
         let grouped = Dictionary(grouping: sessions) { $0.deviceName }
         let grandTotal = sessions.reduce(0) { $0 + $1.duration }
         return grouped.map { name, list in
