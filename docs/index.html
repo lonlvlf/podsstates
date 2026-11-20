@@ -212,6 +212,7 @@
       }
       .seg button:active{transform:scale(.96)}
       .seg button.on{background:rgba(255,255,255,.13);color:#fff;box-shadow:0 2px 8px rgba(2,6,16,.24),inset 0 1px 0 rgba(255,255,255,.10)}
+      .seg.feat-seg{margin-bottom:10px}
       /* device cards */
       .dev-card{
         display:flex;gap:14px;align-items:center;width:100%;text-align:left;color:var(--ink);position:relative;
@@ -291,8 +292,9 @@
       .dev-sub{display:block;font-size:12.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
       .chev{color:var(--faint);flex:none}
       .chev svg{width:18px;height:18px}
-      /* home feature: the headphone in use now + the longest-used one get
-         enlarged product art as the home page's main visual */
+      /* home feature: one enlarged product-art card as the main visual —
+         the headphone in use now or the longest-used one, switched by a
+         segmented toggle above the card, never shown side by side */
       .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
       .feat-grid.one{grid-template-columns:1fr}
       .feat-card{
@@ -928,6 +930,7 @@
       var detailId=null;
       var rangeMode="7";           /* 7 | 30 | custom */
       var detailRange="30";        /* 详情页范围：7 | 30 | 90 | 365 | all，默认 30 天 */
+      var featMode="cur";          /* 主页主图切换：cur 当前在用 | top 使用最长 */
       var customFrom="", customTo="";
       var selHour=null, selDay=null;
       var timerInt=null;
@@ -1087,10 +1090,11 @@
             + '<div class="tm-row"><select id="timer-device" aria-label="选择耳机">'+opts+'</select>'
             + '<button class="btn" type="button" id="timer-start">开始计时</button></div></div>';
         }
-        /* 主图区：当前在用的耳机 + 累计时长最长的耳机，产品图放大做主页主视觉，
-           点开直接进详情。计时中以计时那副为准（正在使用），否则取最近一次
-           记录的耳机（最近在用）；两顶落在同一副耳机上时只出一张整幅大图、
-           两个标签都挂上。全部按真实记录算，不写死。 */
+        /* 主图区：产品图放大做主页主视觉，点开直接进详情。上面只放一副——
+           当前在用（计时中以计时那副为准，显示正在使用；否则取最近一次记录
+           的耳机，显示最近在用）和累计时长最长是两副不同的耳机时，用分段
+           选项切换着看，不同时摆出来；两者是同一副时只出一张整幅大图、
+           两个标签都挂上，也不出现切换。全部按真实记录算，不写死。 */
         if(S.sessions.length){
           var fTot={}, fLast={};
           S.sessions.forEach(function(s){
@@ -1121,13 +1125,20 @@
               + (fLast[id]? ' · 最近 '+fmtDateShort(fLast[id]) : '')+'</span>'
               + '</button>';
           };
-          if(curId && topId && curId===topId){
-            html+='<div class="feat-grid one">'+featCard(curId, [curLive?"正在使用":"最近在用", "累计时长最长"], true)+'</div>';
-          }else if(curId || topId){
-            html+='<div class="feat-grid">'
-              + (curId? featCard(curId, [curLive?"正在使用":"最近在用"], false) : "")
-              + (topId? featCard(topId, ["累计时长最长"], false) : "")
+          if(curId && topId && curId!==topId){
+            var showTop = featMode==="top";
+            html+='<div class="seg feat-seg" role="group" aria-label="主图耳机">'
+              + '<button type="button" data-feat="cur" class="'+(showTop?"":"on")+'">当前在用</button>'
+              + '<button type="button" data-feat="top" class="'+(showTop?"on":"")+'">使用最长</button></div>'
+              + '<div class="feat-grid one">'
+              + featCard(showTop? topId : curId, [showTop? "累计时长最长" : (curLive?"正在使用":"最近在用")], true)
               + '</div>';
+          }else if(curId || topId){
+            var onlyId = curId || topId;
+            var onlyBadges = (curId && topId)
+              ? [curLive?"正在使用":"最近在用", "累计时长最长"]
+              : (curId? [curLive?"正在使用":"最近在用"] : ["累计时长最长"]);
+            html+='<div class="feat-grid one">'+featCard(onlyId, onlyBadges, true)+'</div>';
           }
         }
 
@@ -1222,6 +1233,9 @@
       }
       /* 主页上的设备卡跳转 + 数据管理按钮（与原设备页同一套行为） */
       function bindHomeExtras(){
+        viewEl.querySelectorAll("[data-feat]").forEach(function(b){
+          b.addEventListener("click", function(){ featMode=b.getAttribute("data-feat"); render(); });
+        });
         viewEl.querySelectorAll("[data-dev]").forEach(function(b){
           b.addEventListener("click", function(){ detailId=b.getAttribute("data-dev"); render(); });
         });
