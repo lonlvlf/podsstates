@@ -73,14 +73,14 @@
       .bg-orbs::after{content:"";position:absolute;inset:0;background:radial-gradient(118% 92% at 50% 44%, rgba(0,0,0,0) 58%, rgba(3,6,13,.42) 100%)}
       button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]){min-height:2.25rem}
       button{font:inherit;cursor:pointer}
-      /* Top offset keeps the small brand header well below the status-bar /
-         frosted band in every mode (see history: big titles at the very top
-         stayed blurred). Bottom clears the floating tab bar. */
-      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:calc(46px + env(safe-area-inset-top)) 18px calc(140px + env(safe-area-inset-bottom))}
+      /* Top offset: status bar is opaque black (see meta above), so content
+         already starts below it — only a small breathing gap is needed.
+         Bottom clears the floating tab bar. */
+      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 18px calc(204px + env(safe-area-inset-bottom))}
       @media (display-mode:standalone),(display-mode:fullscreen){
-        .wrap{padding-top:calc(96px + env(safe-area-inset-top))}
+        .wrap{padding-top:calc(18px + env(safe-area-inset-top))}
       }
-      html.ios-standalone .wrap{padding-top:calc(96px + env(safe-area-inset-top))}
+      html.ios-standalone .wrap{padding-top:calc(18px + env(safe-area-inset-top))}
       /* ——— Small brand header (PodHours language): 44px rounded-square icon +
          modest wordmark, lots of air. No big title at the top of the screen. ——— */
       .brand{display:flex;align-items:center;gap:11px;margin-bottom:22px;position:relative;z-index:2;animation:fadeIn var(--dur) var(--ease) both}
@@ -1186,7 +1186,7 @@
         }else{
           html+='<div class="card"><p class="hero-sub" style="margin:0">今天还没有记录。</p></div>';
         }
-        html+='<div class="btn-row" style="margin-top:2px">'
+        html+='<div class="btn-row" style="margin:2px 0 14px">'
           + '<button class="btn" type="button" data-open="sheet-manual">手动补录</button>'
           + '<button class="btn" type="button" data-open="sheet-import">导入健康数据</button>'
           + '</div>';
