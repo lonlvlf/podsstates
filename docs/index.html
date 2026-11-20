@@ -1024,6 +1024,22 @@
         }
         if(S.timer) html+=timerHtml;
 
+        /* 累计总览（PodHours 主页同款：一眼看到全部时间的总账） */
+        if(S.sessions.length){
+          var allSum=summarize(S.sessions);
+          var allDaySet={}; S.sessions.forEach(function(s){ allDaySet[dayKey(s.start)]=1; });
+          var firstTs=S.sessions[0].start; S.sessions.forEach(function(s){ if(s.start<firstTs) firstTs=s.start; });
+          html+='<div class="card"><div class="hero-label">'+ICON_DEV+'累计总览</div>'
+            + '<div class="hero-sub">自 '+fmtDate(firstTs)+' 以来的全部记录</div>'
+            + '<div class="stat-grid" style="margin-top:12px">'
+            + '<div class="stat-cell"><div class="k">累计时长</div><div class="v">'+fmtDurHM(allSum.total)+'</div></div>'
+            + '<div class="stat-cell"><div class="k">累计次数</div><div class="v">'+allSum.count+' <small>次</small></div></div>'
+            + '<div class="stat-cell"><div class="k">聆听天数</div><div class="v">'+Object.keys(allDaySet).length+' <small>天</small></div></div>'
+            + '<div class="stat-cell"><div class="k">平均音量</div><div class="v">'+(allSum.avgVol!=null? allSum.avgVol+' <small>dB</small>':'—')+'</div></div>'
+            + '</div>'
+            + '<p class="note" style="margin-bottom:0">想按周、按月或全部时间细看，去底部「统计」页，里面有每日时长、耳机占比和聆听习惯。</p></div>';
+        }
+
         /* 我的耳机（原设备页的主体）：每副耳机的累计使用情况，点开看详情 */
         if(S.devices.length){
           html+='<div class="sec-head"><h2>我的耳机</h2><span>共 '+S.devices.length+' 副 · 点开看详情</span></div>';
@@ -1100,6 +1116,13 @@
       function rangeSessions(){
         var now=new Date(); now.setHours(23,59,59,999);
         var from;
+        if(rangeMode==="all"){
+          if(!S.sessions.length) return { list:[], from:now.getTime(), to:now.getTime() };
+          var earliest=S.sessions[0].start;
+          S.sessions.forEach(function(s){ if(s.start<earliest) earliest=s.start; });
+          var f0=new Date(earliest); f0.setHours(0,0,0,0);
+          return { list:S.sessions.slice(), from:f0.getTime(), to:now.getTime() };
+        }
         if(rangeMode==="custom" && customFrom){
           from=new Date(customFrom+"T00:00:00").getTime();
           var to= customTo? new Date(customTo+"T23:59:59").getTime() : now.getTime();
@@ -1118,6 +1141,7 @@
         html+='<div class="seg" role="group" aria-label="时间范围">'
           + '<button type="button" data-range="7" class="'+(rangeMode==="7"?"on":"")+'">近 7 天</button>'
           + '<button type="button" data-range="30" class="'+(rangeMode==="30"?"on":"")+'">近 30 天</button>'
+          + '<button type="button" data-range="all" class="'+(rangeMode==="all"?"on":"")+'">全部</button>'
           + '<button type="button" data-range="custom" class="'+(rangeMode==="custom"?"on":"")+'">自选</button></div>';
 
         if(rangeMode==="custom"){
@@ -1167,6 +1191,34 @@
           });
           html+='</div>';
         }
+
+        /* 聆听习惯（PodHours 式洞察：最常听时段 / 星期 / 连续天数 / 最常用耳机） */
+        (function(){
+          var hd=hourDist(r.list);
+          var peakH=0; hd.forEach(function(v,i){ if(v>hd[peakH]) peakH=i; });
+          var wkNames=["周日","周一","周二","周三","周四","周五","周六"];
+          var wk=[0,0,0,0,0,0,0];
+          var daySet={};
+          r.list.forEach(function(s){ wk[new Date(s.start).getDay()]+=durMin(s); daySet[dayKey(s.start)]=1; });
+          var peakW=0; wk.forEach(function(v,i){ if(v>wk[peakW]) peakW=i; });
+          var activeDays=Object.keys(daySet).length;
+          /* 连续聆听天数：从今天（没听则从昨天）往前数连续有记录的天数，基于全部记录算，不受当前范围影响 */
+          var allDays={}; S.sessions.forEach(function(s){ allDays[dayKey(s.start)]=1; });
+          var streak=0, cur=new Date(); cur.setHours(0,0,0,0);
+          if(!allDays[dayKey(cur.getTime())]) cur.setDate(cur.getDate()-1);
+          while(allDays[dayKey(cur.getTime())]){ streak++; cur.setDate(cur.getDate()-1); }
+          var topDev=(typeof useRows!=="undefined" && useRows.length)? useRows[0] : null;
+          html+='<div class="card"><div class="hero-label">'+ICON_DEV+'聆听习惯</div>'
+            + '<div class="hero-sub">按这段时间内的真实记录算出来的</div>'
+            + '<div class="stat-grid" style="margin-top:12px">'
+            + '<div class="stat-cell"><div class="k">最常听的时段</div><div class="v">'+peakH+'–'+(peakH+1)+' 点</div></div>'
+            + '<div class="stat-cell"><div class="k">听得最多的一天</div><div class="v">'+wkNames[peakW]+'</div></div>'
+            + '<div class="stat-cell"><div class="k">有记录的天数</div><div class="v">'+activeDays+' <small>天</small></div></div>'
+            + '<div class="stat-cell"><div class="k">当前连续聆听</div><div class="v">'+streak+' <small>天</small></div></div>'
+            + (topDev? '<div class="stat-cell"><div class="k">最常用的耳机</div><div class="v" style="font-size:15.5px;white-space:normal;line-height:1.35">'+esc(topDev.name)+'</div></div>' : '')
+            + '<div class="stat-cell"><div class="k">单日最长</div><div class="v">'+(function(){ var bt={}; r.list.forEach(function(s){ var k=dayKey(s.start); bt[k]=(bt[k]||0)+durMin(s); }); var mx=0; Object.keys(bt).forEach(function(k){ if(bt[k]>mx) mx=bt[k]; }); return fmtDurHM(mx); })()+'</div></div>'
+            + '</div></div>';
+        })();
 
         /* 每日柱状图 */
         var days=Math.max(1, Math.round((dayKey(r.to)===dayKey(r.from)?1:(new Date(dayKey(r.to))-new Date(dayKey(r.from)))/86400000+1)));
