@@ -15,7 +15,7 @@
          见 CSS 里 .wrap 上方的注释。 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Pods Stats" />
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=34","background_color":"%230d1626","theme_color":"%230d1626"}' />
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=35","background_color":"%230d1626","theme_color":"%230d1626"}' />
     <!-- 主屏幕 App 会把旧页面缓存得很死：明确要求不缓存，让布局修正能真正下发到已添加的图标 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -36,7 +36,7 @@
           (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
         if(!standalone) return;
         document.documentElement.classList.add("ios-standalone");
-        var BUILD_V = "34";
+        var BUILD_V = "35";
         try{
           var u = new URL(window.location.href);
           if(u.searchParams.get("v") !== BUILD_V){
@@ -118,7 +118,7 @@
       html.ios-standalone .wrap{padding-top:calc(env(safe-area-inset-top,0px) + 8px)}
       /* ——— Small brand header (PodHours language): 44px rounded-square icon +
          modest wordmark, lots of air. No big title at the top of the screen. ——— */
-      .brand{display:flex;align-items:center;gap:11px;margin-bottom:22px;position:relative;z-index:2;animation:fadeIn var(--dur) var(--ease) both}
+      .brand{display:flex;align-items:center;gap:11px;margin-bottom:12px;position:relative;z-index:2;animation:fadeIn var(--dur) var(--ease) both}
       .brand-ic{
         width:44px;height:44px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;color:#e9eef8;
         background:linear-gradient(165deg,rgba(255,255,255,.13),rgba(255,255,255,.04)),rgba(21,32,54,.55);
@@ -130,7 +130,7 @@
       .brand-name{font-size:20px;font-weight:700;letter-spacing:-.01em}
       .page-title{font-size:21px;font-weight:700;letter-spacing:-.015em;margin:0 0 2px;position:relative;z-index:2}
       h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 2px;position:relative;z-index:2}
-      .date-line{color:var(--sub);font-size:14px;margin-bottom:14px;font-variant-numeric:tabular-nums;position:relative;z-index:2}
+      .date-line{color:var(--sub);font-size:14px;margin-bottom:8px;font-variant-numeric:tabular-nums;position:relative;z-index:2}
       h2{font-size:16.5px;font-weight:650;margin:0}
       /* ——— Frosted glass, large radius, hairline border, soft shadow.
          A whisper of tint over a deep slate base: brightness stays even
@@ -194,7 +194,7 @@
       .chart-note{font-size:14px;color:var(--sub);margin-top:6px;min-height:21px}
       .chart-note b{color:var(--ink)}
       /* section heading + record cards */
-      .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:24px 2px 12px;animation:fadeIn var(--dur) var(--ease) both}
+      .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:14px 2px 12px;animation:fadeIn var(--dur) var(--ease) both}
       .sec-head h2{font-size:19px;font-weight:700;letter-spacing:-.015em}
       .sec-head span{color:var(--faint);font-size:13px;flex:none}
       .rec-card{
@@ -362,39 +362,37 @@
       .feat-wide .feat-img.cover img{height:196px;max-width:100%}
       .feat-wide .feat-name{font-size:18px;margin-top:14px}
       .feat-wide .feat-dur{font-size:26px}
-      /* ——— 主图卡动效：照着 iOS 上 AirPods 开盖靠近 iPhone 的连接弹窗做——
-         卡片从下方带弹簧感整幅滑上来落定；产品图在带透视的舞台里做
-         rotateY 往复 3D 摇摆（入场先来一次大摇摆），配悬浮和呼吸阴影；
-         图下面是电量式信息行（真实使用占比 / 最近使用，不编电量）和一颗
-         大「连接」按钮，点它走 连接中 → 已连接；点卡片其他位置重播一次
-         整个弹窗动画（JS 加 .feat-replay）。切换「当前在用 / 使用最长」
-         时旧卡先沉下去淡出、新卡再弹簧滑入（.feat-leaving / .feat-swap）。
+      /* ——— 主图卡动效：纯视觉，不改交互（点卡片照旧进详情页，没有
+         任何按钮 / 连接流程）。卡片入场从下方带弹簧感浮现落定；耳机图
+         是一张 2D 平面产品图，做不了真 3D 旋转——大角度 rotateY 只会把
+         图横向压扁、像纸片翻转。所以只用平面内的小角度轻摆（rotate
+         ±3.5°，不变形不压扁）+ 缓慢上下悬浮 + 呼吸阴影 + 入场一道光泽
+         扫过，丝滑来自慢周期和缓动曲线。切换「当前在用 / 使用最长」时
+         旧卡先沉下去淡出、新卡再弹簧浮现（.feat-leaving / .feat-swap）。
          全程只动 transform / opacity，不触发重排。 ——— */
       .feat-pop{animation:featPop 720ms var(--ease-spring) backwards;will-change:transform,opacity}
       @keyframes featPop{0%{opacity:0;transform:translateY(76px) scale(.94)}52%{opacity:1;transform:translateY(-5px) scale(1.007)}76%{transform:translateY(2px) scale(.999)}100%{opacity:1;transform:translateY(0) scale(1)}}
       .feat-swap{animation:featSwap 560ms var(--ease-spring) backwards;will-change:transform,opacity}
       @keyframes featSwap{0%{opacity:0;transform:translateY(38px) scale(.95)}56%{opacity:1;transform:translateY(-3px) scale(1.004)}100%{opacity:1;transform:translateY(0) scale(1)}}
-      .feat-replay{animation:featPop 720ms var(--ease-spring) backwards;will-change:transform,opacity}
       .feat-leaving{transition:transform 170ms ease-in,opacity 170ms ease-in!important;transform:translateY(10px) scale(.965)!important;opacity:0}
-      .feat-img{position:relative;perspective:900px}
+      .feat-img{position:relative}
       .feat-img::before{content:"";position:absolute;inset:4% 10%;background:radial-gradient(55% 62% at 50% 46%, rgba(150,175,215,.13), rgba(150,175,215,0) 70%);opacity:.5;animation:featGlow 5.6s ease-in-out .7s infinite alternate;will-change:opacity}
       @keyframes featGlow{from{opacity:.42}to{opacity:.85}}
-      .feat-float{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;animation:featFloat 5.6s ease-in-out .7s infinite alternate;will-change:transform;transform-style:preserve-3d}
+      .feat-float{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;animation:featFloat 5.6s ease-in-out .7s infinite alternate;will-change:transform}
       @keyframes featFloat{from{transform:translateY(4px)}to{transform:translateY(-6px)}}
-      /* 3D 摇摆预览：学苹果弹窗里 AirPods 缓慢转动的样子——带透视的
-         rotateY 往复摇摆（不是平面图原地平移），转到侧面时图自然变窄、
-         有真实的空间感；和悬浮、阴影共用 5.6s 周期，动作合在一起不打架 */
-      .feat-3d{position:relative;display:flex;align-items:center;justify-content:center;transform-style:preserve-3d;animation:featSway 5.6s ease-in-out .7s infinite;will-change:transform}
-      @keyframes featSway{0%,100%{transform:rotateY(-26deg) rotateX(2deg)}50%{transform:rotateY(26deg) rotateX(-1.5deg)}}
+      /* 平面轻摆：整张图在画面平面内小角度来回倾斜（rotate ±3.5°），
+         宽度不变、不压扁；和悬浮、阴影共用 5.6s 周期，动作合拍 */
+      .feat-3d{position:relative;display:flex;align-items:center;justify-content:center;animation:featSway 5.6s ease-in-out .7s infinite alternate;will-change:transform}
+      @keyframes featSway{from{transform:rotate(-3.5deg)}to{transform:rotate(3.5deg)}}
       .feat-img.cover .feat-3d{width:100%;height:100%}
-      /* 入场 / 重播时的一次大摇摆：先往一侧转开、再荡回来落定，
-         像弹窗里的耳机被“摆”到你面前，只播一次，之后交给持续摇摆 */
-      .feat-spin{display:flex;align-items:center;justify-content:center;transform-style:preserve-3d;will-change:transform}
+      /* 入场时的一次轻摆落定：从 -6° 起、荡过 +2° 回到 0，只播一次，
+         幅度始终在平面图不变形的范围内，之后交给持续轻摆 */
+      .feat-spin{display:flex;align-items:center;justify-content:center;will-change:transform}
       .feat-img.cover .feat-spin{width:100%;height:100%}
-      .feat-pop .feat-spin,.feat-swap .feat-spin,.feat-replay .feat-spin{animation:featSwingOnce 1150ms var(--ease) 140ms both}
-      @keyframes featSwingOnce{0%{transform:rotateY(0deg)}30%{transform:rotateY(-34deg)}62%{transform:rotateY(24deg)}84%{transform:rotateY(-7deg)}100%{transform:rotateY(0deg)}}
+      .feat-pop .feat-spin,.feat-swap .feat-spin{animation:featSettle 900ms var(--ease) 120ms both}
+      @keyframes featSettle{0%{transform:rotate(-6deg) scale(.96)}55%{transform:rotate(2deg) scale(1.005)}100%{transform:rotate(0deg) scale(1)}}
       .feat-img.cover .feat-float{width:100%;height:100%}
-      .feat-pop .feat-img,.feat-swap .feat-img,.feat-replay .feat-img{animation:featImgIn 680ms var(--ease-spring) both}
+      .feat-pop .feat-img,.feat-swap .feat-img{animation:featImgIn 680ms var(--ease-spring) both}
       @keyframes featImgIn{0%{opacity:0;transform:translateY(16px) scale(.9)}55%{opacity:1;transform:translateY(-3px) scale(1.012)}100%{opacity:1;transform:translateY(0) scale(1)}}
       .feat-shadow{position:absolute;left:50%;bottom:2px;width:54%;height:22px;z-index:0;pointer-events:none;background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.48), rgba(0,0,0,0) 70%);transform:translateX(-50%) scaleX(1.04);opacity:.65;animation:featShadow 5.6s ease-in-out .7s infinite alternate;will-change:transform,opacity}
       @keyframes featShadow{from{transform:translateX(-50%) scaleX(1.04);opacity:.65}to{transform:translateX(-50%) scaleX(.84);opacity:.42}}
@@ -402,35 +400,11 @@
       .feat-sheen{position:absolute;inset:0;overflow:hidden;pointer-events:none;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
       .feat-sheen::before{content:"";position:absolute;top:-25%;bottom:-25%;left:0;width:45%;background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.15) 50%,rgba(255,255,255,0) 100%);transform:translateX(-240%) skewX(-12deg);animation:featSheen 1050ms var(--ease) 420ms both;will-change:transform}
       @keyframes featSheen{from{transform:translateX(-240%) skewX(-12deg)}to{transform:translateX(360%) skewX(-12deg)}}
-      .feat-pop .feat-badges,.feat-swap .feat-badges,.feat-replay .feat-badges{animation:featTextIn 480ms var(--ease) 90ms both}
-      .feat-pop .feat-name,.feat-swap .feat-name,.feat-replay .feat-name{animation:featTextIn 480ms var(--ease) 175ms both}
-      .feat-pop .feat-dur,.feat-swap .feat-dur,.feat-replay .feat-dur{animation:featTextIn 480ms var(--ease) 235ms both}
-      .feat-pop .feat-meta,.feat-swap .feat-meta,.feat-replay .feat-meta{animation:featTextIn 480ms var(--ease) 295ms both}
-      .feat-pop .feat-batt,.feat-swap .feat-batt,.feat-replay .feat-batt{animation:featTextIn 480ms var(--ease) 350ms both}
-      .feat-pop .feat-connect,.feat-swap .feat-connect,.feat-replay .feat-connect{animation:featTextIn 480ms var(--ease) 410ms both}
+      .feat-pop .feat-badges,.feat-swap .feat-badges{animation:featTextIn 480ms var(--ease) 90ms both}
+      .feat-pop .feat-name,.feat-swap .feat-name{animation:featTextIn 480ms var(--ease) 175ms both}
+      .feat-pop .feat-dur,.feat-swap .feat-dur{animation:featTextIn 480ms var(--ease) 235ms both}
+      .feat-pop .feat-meta,.feat-swap .feat-meta{animation:featTextIn 480ms var(--ease) 295ms both}
       @keyframes featTextIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
-      /* ——— 弹窗下半段：电量式信息行 + 大「连接」按钮（学苹果弹窗的版式）。
-         网页拿不到耳机真实电量，这里不编百分比冒充电量：左边一格是这副
-         耳机在全部耳机里的真实使用占比（带占比条），右边是最近一次使用
-         日期，都是卡片上已有的真实记录算出来的。 ——— */
-      .feat-batt{display:flex;gap:8px;width:100%;margin-top:13px}
-      .feat-batt-item{flex:1;min-width:0;display:flex;align-items:center;gap:8px;text-align:left;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:8px 10px}
-      .feat-batt-ic{flex:none;width:26px;height:26px;border-radius:8px;background:rgba(169,184,245,.14);color:var(--accent-ink);display:flex;align-items:center;justify-content:center}
-      .feat-batt-ic svg{width:16px;height:16px}
-      .feat-batt-main{flex:1;min-width:0;display:block}
-      .feat-batt-label{display:block;font-size:11px;color:var(--faint);line-height:1.25;white-space:nowrap}
-      .feat-batt-val{display:block;font-size:14.5px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .feat-batt-bar{display:block;height:3.5px;border-radius:99px;background:rgba(255,255,255,.10);margin-top:4px;overflow:hidden}
-      .feat-batt-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7fd4a8,#a9b8f5);transform-origin:left;animation:barGrow 700ms var(--ease) both;animation-delay:450ms}
-      /* 大连接按钮：苹果弹窗同款整幅蓝色胶囊；连接中转圈、已连接变绿，
-         只是卡片上的动效演示（网页连不了蓝牙），点已连接进详情页 */
-      .feat-connect{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin-top:11px;border-radius:999px;background:linear-gradient(180deg,#1a8cff,#0071e3);color:#fff;font-size:16px;font-weight:700;letter-spacing:.02em;box-shadow:0 8px 20px rgba(0,113,227,.32),inset 0 1px 0 rgba(255,255,255,.22);transition:background var(--dur) var(--ease),transform var(--dur-fast) var(--ease-spring)}
-      .feat-connect:active{transform:scale(.97)}
-      .feat-connect.is-connecting{background:linear-gradient(180deg,#4aa3ff,#2b83e6);box-shadow:0 8px 20px rgba(0,113,227,.26),inset 0 1px 0 rgba(255,255,255,.22)}
-      .feat-connect.is-connected{background:linear-gradient(180deg,#3ddc74,#1db954);box-shadow:0 8px 20px rgba(29,185,84,.30),inset 0 1px 0 rgba(255,255,255,.22)}
-      .feat-connect svg{width:19px;height:19px;flex:none}
-      .feat-spin-dot{width:17px;height:17px;flex:none;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:featSpinDot .7s linear infinite;will-change:transform}
-      @keyframes featSpinDot{to{transform:rotate(360deg)}}
       /* detail page, PodHours layout: open and one-glance — brand line,
          big title, product art, white-selected range capsules, date boxes,
          one huge duration, daily bars in white */
@@ -544,13 +518,13 @@
       .steps{margin:10px 0 0;padding-left:20px;color:var(--ink)}
       .steps li{margin-bottom:9px}
       .steps b{color:var(--accent-ink)}
-      .empty{padding:14px 10px;text-align:center;color:var(--sub)}
+      .empty{padding:4px 10px;text-align:center;color:var(--sub)}
       .empty .t{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:5px}
-      .empty p{margin:0 0 12px;font-size:14px}
+      .empty p{margin:0 0 8px;font-size:14px}
       /* action banner — PodHours-style tappable glass row: light lavender
          icon tile, white bold title, gray sub */
       .banner{
-        display:flex;gap:13px;align-items:center;border-radius:22px;padding:14px 16px;margin-bottom:14px;position:relative;
+        display:flex;gap:13px;align-items:center;border-radius:22px;padding:12px 16px;margin-bottom:14px;position:relative;
         background:linear-gradient(180deg,rgba(255,255,255,.040),rgba(255,255,255,.020)),rgba(13,20,36,.52);
         border:1px solid var(--glass-brd);box-shadow:var(--shadow-sm);
         backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%);
@@ -614,7 +588,7 @@
       @media (prefers-reduced-motion: reduce){
         *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
         .hero-enter,.hero-float,.hero-shadow,.hero-sheen::before,.pulse,.anim-in,.detail-rise,.view-fade,.use-bar i,nav.tabbar,.ring-fg{animation:none!important}
-        .feat-pop,.feat-swap,.feat-replay,.feat-float,.feat-3d,.feat-spin,.feat-shadow,.feat-img::before,.feat-sheen::before,.feat-spin-dot,.feat-batt-bar i,.feat-pop .feat-img,.feat-swap .feat-img,.feat-replay .feat-img,.feat-pop .feat-badges,.feat-swap .feat-badges,.feat-replay .feat-badges,.feat-pop .feat-name,.feat-swap .feat-name,.feat-replay .feat-name,.feat-pop .feat-dur,.feat-swap .feat-dur,.feat-replay .feat-dur,.feat-pop .feat-meta,.feat-swap .feat-meta,.feat-replay .feat-meta,.feat-pop .feat-batt,.feat-swap .feat-batt,.feat-replay .feat-batt,.feat-pop .feat-connect,.feat-swap .feat-connect,.feat-replay .feat-connect{animation:none!important}
+        .feat-pop,.feat-swap,.feat-float,.feat-3d,.feat-spin,.feat-shadow,.feat-img::before,.feat-sheen::before,.feat-pop .feat-img,.feat-swap .feat-img,.feat-pop .feat-badges,.feat-swap .feat-badges,.feat-pop .feat-name,.feat-swap .feat-name,.feat-pop .feat-dur,.feat-swap .feat-dur,.feat-pop .feat-meta,.feat-swap .feat-meta{animation:none!important}
         .feat-3d,.feat-spin{transform:none!important}
         .feat-sheen{display:none}
         .feat-leaving{transition:none!important;transform:none!important;opacity:1!important}
@@ -624,7 +598,7 @@
         .btn:active,.tab:active,.dev-card:active,.rec-card:active,.back-btn:active,.icon-btn:active,.bar-col:active{transform:none!important}
       }
       /* home: timer is an auxiliary tool — one quiet compact card, never a hero */
-      .timer-mini{padding:15px 17px}
+      .timer-mini{padding:11px 17px}
       .timer-mini .tm-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
       .timer-mini .tm-title{font-size:14.5px;font-weight:650}
       .timer-mini .tm-note{font-size:12.5px;color:var(--faint);flex:none}
@@ -1198,18 +1172,14 @@
             var ls=-1;
             S.sessions.forEach(function(s){ if(deviceById(s.device) && s.start>ls){ ls=s.start; curId=s.device; } });
           }
-          var ICON_CASE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="17" height="11.5" rx="3.5"/><path d="M3.5 12.2h17"/></svg>';
           var featCard=function(id, badges, wide){
             var dv=deviceById(id); if(!dv) return "";
             var st=deviceStats(id);
             var im=deviceImg(dv);
             var chips=badges.map(function(b){ return '<span class="feat-badge">'+b+'</span>'; }).join("");
-            /* 电量式信息行的数据都来自真实记录：使用占比 = 这副耳机的累计
-               时长 ÷ 全部耳机累计时长；最近使用 = 最后一次记录的日期。
-               网页拿不到耳机真实电量，绝不编一个百分比冒充电量。 */
-            var allTot=0;
-            Object.keys(fTot).forEach(function(k){ allTot+=fTot[k]; });
-            var sharePct= allTot>0? st.sum.total/allTot*100 : 0;
+            /* 主图卡就是原来的样子：徽章 + 产品图（带轻摆/悬浮动效）+
+               名称 + 累计时长 + 天数/次数/最近使用。点整张卡进详情页，
+               动画只是视觉效果，卡上不放任何按钮。 */
             return '<button class="feat-card'+(wide?" feat-wide":"")+(featSwapPending?" feat-swap":" feat-pop")+'" type="button" data-dev="'+dv.id+'">'
               + '<span class="feat-badges">'+chips+'</span>'
               + '<span class="feat-img'+(im.cover?" cover":"")+'"><span class="feat-float"><span class="feat-3d"><span class="feat-spin"><img src="'+im.src+'" alt="'+esc(dv.name)+'" />'
@@ -1219,11 +1189,6 @@
               + '<span class="feat-dur">'+fmtDurHM(st.sum.total)+'</span>'
               + '<span class="feat-meta">'+st.days+' 天 · '+st.sum.count+' 次'
               + (fLast[id]? ' · 最近 '+fmtDateShort(fLast[id]) : '')+'</span>'
-              + '<span class="feat-batt">'
-              + '<span class="feat-batt-item"><span class="feat-batt-ic">'+ICON_DEV+'</span><span class="feat-batt-main"><span class="feat-batt-label">使用占比</span><span class="feat-batt-val">'+(Math.round(sharePct*10)/10)+'%</span><span class="feat-batt-bar"><i style="width:'+Math.max(3,sharePct).toFixed(1)+'%"></i></span></span></span>'
-              + '<span class="feat-batt-item"><span class="feat-batt-ic">'+ICON_CASE+'</span><span class="feat-batt-main"><span class="feat-batt-label">最近使用</span><span class="feat-batt-val">'+(fLast[id]? fmtDate(fLast[id]) : '暂无记录')+'</span></span></span>'
-              + '</span>'
-              + '<span class="feat-connect" data-connect>连接</span>'
               + '</button>';
           };
           if(curId && topId && curId!==topId){
@@ -1309,7 +1274,7 @@
         }else{
           html+='<div class="card"><p class="hero-sub" style="margin:0">今天还没有记录。</p></div>';
         }
-        html+='<div class="btn-row" style="margin:2px 0 14px">'
+        html+='<div class="btn-row" style="margin:2px 0 8px">'
           + '<button class="btn" type="button" data-open="sheet-manual">手动补录</button>'
           + '<button class="btn" type="button" data-open="sheet-import">导入健康数据</button>'
           + '</div>';
@@ -1317,14 +1282,16 @@
         /* 没在计时：计时入口压到页尾，只占一行小卡 */
         if(!S.timer) html+=timerHtml;
 
-        /* 数据管理（原设备页底部，一并搬到主页）。margin-top 放大：空状态下
-           页面不长，这张卡的第一排按钮原本正好落在浮动底栏的高度上被盖住，
-           多留一段间隔让它首屏时完整露在底栏下方，滚动到底也有底部留白托住 */
-        html+='<div class="card" style="margin-top:76px"><h2>数据管理</h2>'
+        /* 数据管理（原设备页底部，一并搬到主页）。不额外加 margin-top：
+           之前加过 76px 想躲浮动底栏，结果反而把卡片往下推、第一排按钮
+           正好压进底栏底下（390px 审计实测遮挡）；去掉后靠上一张卡的
+           margin-bottom 留正常间隔，按钮回到首屏底栏上方，页面底部
+           204px 留白保证滚动到底时整卡也完整露在底栏上方 */
+        html+='<div class="card"><h2>数据管理</h2>'
           + '<div class="btn-row">'
           + '<button class="btn" type="button" data-open="sheet-import">导入健康数据</button>'
           + '<button class="btn" type="button" id="btn-export">导出备份</button></div>'
-          + '<div class="btn-row" style="margin-top:10px">'
+          + '<div class="btn-row" style="margin-top:6px">'
           + '<button class="btn" type="button" id="btn-restore">恢复备份</button>'
           + '<button class="btn danger" type="button" id="btn-clear">清空全部数据</button></div>'
           + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p></div>';
@@ -1344,7 +1311,7 @@
             var card=viewEl.querySelector(".feat-card");
             /* 减弱动效或找不到卡片时直接换，不走过渡 */
             if(reducedMotion() || !card || card.classList.contains("feat-leaving")){ featMode=mode; render(); return; }
-            /* 苹果弹窗式的顺滑切换：旧卡先轻轻沉下去淡出（170ms），
+            /* 顺滑切换：旧卡先轻轻沉下去淡出（170ms），
                新卡再带弹簧感浮现，图片和文字跟着依次过渡，不生硬替换；
                切换期间滚动位置保持不动 */
             card.classList.add("feat-leaving");
@@ -1355,44 +1322,11 @@
             },175);
           });
         });
-        var ICON_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg>';
         viewEl.querySelectorAll("[data-dev]").forEach(function(b){
-          b.addEventListener("click", function(e){
-            /* 总览列表行照旧：点哪副进哪副的详情 */
-            if(!b.classList.contains("feat-card")){ detailId=b.getAttribute("data-dev"); render(); return; }
-            var conn=b.querySelector("[data-connect]");
-            var onConn= e.target && typeof e.target.closest==="function" && e.target.closest("[data-connect]");
-            if(onConn && conn){
-              /* 大「连接」按钮：连接中（转圈）→ 已连接（变绿），是弹窗动效
-                 演示，网页本身连不了蓝牙；已连接后再点一次进详情页 */
-              e.stopPropagation();
-              var state=conn.getAttribute("data-state");
-              if(state==="busy") return;
-              if(state==="done"){ detailId=b.getAttribute("data-dev"); render(); return; }
-              conn.setAttribute("data-state","busy");
-              conn.classList.add("is-connecting");
-              conn.innerHTML='<span class="feat-spin-dot" aria-hidden="true"></span>连接中';
-              setTimeout(function(){
-                if(!document.contains(conn)) return;
-                conn.classList.remove("is-connecting");
-                conn.classList.add("is-connected");
-                conn.setAttribute("data-state","done");
-                conn.innerHTML=ICON_CHECK+'已连接';
-              }, reducedMotion()? 80 : 950);
-              return;
-            }
-            /* 点主图卡其他位置：重播一次完整的弹窗动画（卡片从底部弹簧
-               滑入 + 耳机大摇摆 + 光泽 + 文字依次浮现），连接按钮回到
-               初始态；详情页从下方总览列表行照常进 */
-            if(reducedMotion()) return;
-            if(conn){
-              conn.removeAttribute("data-state");
-              conn.classList.remove("is-connecting","is-connected");
-              conn.textContent="连接";
-            }
-            b.classList.remove("feat-pop","feat-swap","feat-replay");
-            void b.offsetWidth;
-            b.classList.add("feat-replay");
+          b.addEventListener("click", function(){
+            /* 主图卡和总览列表行一样：点哪副进哪副的详情。
+               主图卡上的轻摆/悬浮只是视觉动效，不拦点击、不改交互 */
+            detailId=b.getAttribute("data-dev"); render();
           });
         });
         var ex=document.getElementById("btn-export");
