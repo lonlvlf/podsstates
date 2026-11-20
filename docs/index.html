@@ -309,15 +309,23 @@
         transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease),box-shadow var(--dur-fast) var(--ease);
       }
       input:focus,select:focus{outline:none;border-color:rgba(125,196,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 3px rgba(77,178,255,.18)}
-      /* minmax(0,1fr): a plain 1fr track never shrinks below its content, and iOS date
-         inputs are intrinsically wide — side-by-side fields would overflow the card
-         and overlap each other. Forcing the track minimum to 0 keeps each field at
-         exactly half the card width. */
+      /* minmax(0,1fr): a plain 1fr track never shrinks below its content. */
       .form-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
       .form-2>*{min-width:0}
-      /* date/time fields carry a long localized string (2026年11月20日): let them
-         shrink to their column and trim padding/font so the full date fits */
-      input[type="date"],input[type="time"]{min-width:0;padding-left:8px;padding-right:8px;font-size:14px}
+      /* iOS Safari date/time inputs have an intrinsic minimum width (the localized
+         string 2026年11月20日 plus the picker indicator) that ignores min-width:0
+         and any track narrower than itself: side by side on a phone, each field
+         overflows its half of the card, the pair overlap in the middle and the
+         second one sticks out of the card's right edge. Squeezing harder cannot
+         fix that, so on phone widths paired fields stack full-width instead —
+         a full row (~310px) is far wider than the intrinsic minimum (~180px),
+         which makes overlap impossible. Desktop keeps the two-column layout. */
+      @media (max-width:560px){
+        .form-2{grid-template-columns:minmax(0,1fr)}
+      }
+      /* date/time fields carry a long localized string (2026年11月20日): never let
+         the control itself exceed its container, whatever the engine's intrinsic size */
+      input[type="date"],input[type="time"]{min-width:0;max-width:100%;padding-left:8px;padding-right:8px;font-size:14px}
       /* Bottom dock behind the floating tab bar: a deep-blue fade that content scrolls
          under, so page text never ghosts through the capsule — it dissolves into the
          dock first, like a native tab bar's fade. Pure background alpha (no backdrop
