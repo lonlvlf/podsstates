@@ -291,6 +291,64 @@
       .dev-sub{display:block;font-size:12.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
       .chev{color:var(--faint);flex:none}
       .chev svg{width:18px;height:18px}
+      /* home feature: the headphone in use now + the longest-used one get
+         enlarged product art as the home page's main visual */
+      .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+      .feat-grid.one{grid-template-columns:1fr}
+      .feat-card{
+        display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;color:var(--ink);position:relative;
+        background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.020) 55%,rgba(255,255,255,.026)),rgba(13,20,36,.55);
+        border:1px solid var(--glass-brd);border-radius:24px;box-shadow:var(--shadow);
+        backdrop-filter:blur(26px) saturate(145%);-webkit-backdrop-filter:blur(26px) saturate(145%);
+        padding:16px 12px 15px;
+        transition:transform var(--dur-fast) var(--ease-spring),background var(--dur) var(--ease);
+      }
+      .feat-card:active{transform:scale(.978)}
+      .feat-badges{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:22px}
+      .feat-badge{font-size:11.5px;font-weight:650;color:var(--accent-ink);background:var(--accent-soft);border:1px solid rgba(169,184,245,.28);border-radius:999px;padding:2px 9px;white-space:nowrap}
+      .feat-img{display:flex;align-items:center;justify-content:center;width:100%;height:112px;margin-top:10px}
+      .feat-img img{max-width:88%;max-height:112px;object-fit:contain;filter:drop-shadow(0 12px 16px rgba(0,0,0,.36))}
+      .feat-img.cover img{width:100%;height:112px;max-width:100%;object-fit:cover;border-radius:14px;filter:none}
+      .feat-name{font-weight:700;font-size:15px;line-height:1.3;margin-top:10px}
+      .feat-dur{font-size:20px;font-weight:750;letter-spacing:-.015em;font-variant-numeric:tabular-nums;margin-top:2px}
+      .feat-meta{font-size:12.5px;color:var(--sub);margin-top:1px}
+      .feat-wide{padding:20px 18px 18px}
+      .feat-wide .feat-img{height:196px;margin-top:14px}
+      .feat-wide .feat-img img{max-height:196px;max-width:min(240px,64vw)}
+      .feat-wide .feat-img.cover img{height:196px;max-width:100%}
+      .feat-wide .feat-name{font-size:18px;margin-top:14px}
+      .feat-wide .feat-dur{font-size:26px}
+      /* detail page, PodHours layout: open and one-glance — brand line,
+         big title, product art, white-selected range capsules, date boxes,
+         one huge duration, daily bars in white */
+      .d-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+      .d-top .back-btn{margin-bottom:0}
+      .d-last{flex:none;font-size:13px;color:var(--sub);border:1px solid var(--glass-brd);background:rgba(255,255,255,.05);border-radius:999px;padding:7px 13px;backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%)}
+      .d-brand{font-size:14.5px;color:var(--sub);margin-bottom:6px}
+      .d-title{font-size:31px;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin:0 0 14px}
+      .dswitch{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+      .dswitch::-webkit-scrollbar{display:none}
+      .dchip{flex:none;display:flex;align-items:center;gap:8px;border-radius:999px;border:1px solid var(--glass-brd);background:rgba(255,255,255,.05);color:var(--ink);padding:6px 14px 6px 7px;font-size:14px;font-weight:600;transition:transform var(--dur-fast) var(--ease-spring),background var(--dur) var(--ease),color var(--dur) var(--ease)}
+      .dchip:active{transform:scale(.95)}
+      .dchip.on{background:#f4f6fb;color:#131a2a;border-color:transparent}
+      .dchip-ic{width:28px;height:28px;border-radius:9px;overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 120% at 50% 28%, rgba(170,190,220,.12), rgba(8,12,22,.30) 72%)}
+      .dchip-ic img{width:100%;height:100%;object-fit:contain;padding:3px;display:block}
+      .dchip-ic.cover img{object-fit:cover;padding:0}
+      .seg.drange{margin-bottom:12px}
+      .seg.drange button{padding:9px 4px;font-size:15px}
+      .seg.drange button.on{background:#f4f6fb;color:#131a2a;font-weight:700;box-shadow:0 2px 10px rgba(2,6,16,.25)}
+      .ddates{display:flex;align-items:center;gap:9px;margin-bottom:22px}
+      .ddate{flex:1;text-align:center;padding:11px 4px;border:1px solid var(--glass-brd);border-radius:14px;background:rgba(255,255,255,.04);font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+      .darrow{color:var(--faint);flex:none}
+      .d-label{font-size:15.5px;color:var(--sub)}
+      .dbig{font-size:62px;font-weight:800;letter-spacing:-.03em;line-height:1.12;font-variant-numeric:tabular-nums;margin:2px 0 4px}
+      .dbig small{font-size:21px;font-weight:600;color:var(--sub);letter-spacing:0}
+      .d-sub{font-size:15px;color:var(--sub);line-height:1.55}
+      .d-chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:26px 2px 8px;font-size:14.5px;color:var(--sub)}
+      .bars.tall{height:132px}
+      .bars.wbars .bar{background:rgba(255,255,255,.16)}
+      .bars.wbars .bar-col.on .bar{background:linear-gradient(180deg,#ffffff,rgba(178,192,228,.38))}
+      .bars.wbars .bar-col.sel .bar{background:#ffffff;box-shadow:0 0 12px rgba(255,255,255,.25)}
       /* donut / share */
       .donut-wrap{display:flex;align-items:center;gap:18px}
       .donut-wrap .ring-wrap{margin:0}
@@ -869,6 +927,7 @@
       var view="today";
       var detailId=null;
       var rangeMode="7";           /* 7 | 30 | custom */
+      var detailRange="30";        /* 详情页范围：7 | 30 | 90 | 365 | all，默认 30 天 */
       var customFrom="", customTo="";
       var selHour=null, selDay=null;
       var timerInt=null;
@@ -1028,6 +1087,50 @@
             + '<div class="tm-row"><select id="timer-device" aria-label="选择耳机">'+opts+'</select>'
             + '<button class="btn" type="button" id="timer-start">开始计时</button></div></div>';
         }
+        /* 主图区：当前在用的耳机 + 累计时长最长的耳机，产品图放大做主页主视觉，
+           点开直接进详情。计时中以计时那副为准（正在使用），否则取最近一次
+           记录的耳机（最近在用）；两顶落在同一副耳机上时只出一张整幅大图、
+           两个标签都挂上。全部按真实记录算，不写死。 */
+        if(S.sessions.length){
+          var fTot={}, fLast={};
+          S.sessions.forEach(function(s){
+            fTot[s.device]=(fTot[s.device]||0)+durMin(s);
+            if(fLast[s.device]==null || s.start>fLast[s.device]) fLast[s.device]=s.start;
+          });
+          var topId=null;
+          Object.keys(fTot).forEach(function(id){
+            if(deviceById(id) && (topId===null || fTot[id]>fTot[topId])) topId=id;
+          });
+          var curId=null, curLive=false;
+          if(S.timer && deviceById(S.timer.device)){ curId=S.timer.device; curLive=true; }
+          else{
+            var ls=-1;
+            S.sessions.forEach(function(s){ if(deviceById(s.device) && s.start>ls){ ls=s.start; curId=s.device; } });
+          }
+          var featCard=function(id, badges, wide){
+            var dv=deviceById(id); if(!dv) return "";
+            var st=deviceStats(id);
+            var im=deviceImg(dv);
+            var chips=badges.map(function(b){ return '<span class="feat-badge">'+b+'</span>'; }).join("");
+            return '<button class="feat-card'+(wide?" feat-wide":"")+'" type="button" data-dev="'+dv.id+'">'
+              + '<span class="feat-badges">'+chips+'</span>'
+              + '<span class="feat-img'+(im.cover?" cover":"")+'"><img src="'+im.src+'" alt="'+esc(dv.name)+'" /></span>'
+              + '<span class="feat-name">'+esc(dv.name)+'</span>'
+              + '<span class="feat-dur">'+fmtDurHM(st.sum.total)+'</span>'
+              + '<span class="feat-meta">'+st.days+' 天 · '+st.sum.count+' 次'
+              + (fLast[id]? ' · 最近 '+fmtDateShort(fLast[id]) : '')+'</span>'
+              + '</button>';
+          };
+          if(curId && topId && curId===topId){
+            html+='<div class="feat-grid one">'+featCard(curId, [curLive?"正在使用":"最近在用", "累计时长最长"], true)+'</div>';
+          }else if(curId || topId){
+            html+='<div class="feat-grid">'
+              + (curId? featCard(curId, [curLive?"正在使用":"最近在用"], false) : "")
+              + (topId? featCard(topId, ["累计时长最长"], false) : "")
+              + '</div>';
+          }
+        }
+
         /* 耳机总览：导入完第一屏就直观看到的全部情况（PodHours 式首屏）——
            累计大字 + 每副耳机的产品图、时长和占比条，不用滚动、不用点进详情；
            今日卡（todayHtml）排在总览和「我的耳机」之后，不抢首屏的位置 */
@@ -1446,50 +1549,120 @@
         });
       }
 
-      /* ---------- 设备详情 ---------- */
+      /* ---------- 设备详情（PodHours 式版式：一眼看清，不堆小数据） ---------- */
+      function fmtHuge(min){
+        min=Math.round(min||0);
+        var h=Math.floor(min/60), m=min%60;
+        if(h>0) return h+'<small> 小时 </small>'+m+'<small> 分</small>';
+        return m+'<small> 分</small>';
+      }
+      /* 详情页切换顺序：累计时长从长到短，和主页耳机列表一致 */
+      function detailOrder(){
+        return S.devices.map(function(dv){ return dv.id; })
+          .sort(function(a,b){ return deviceStats(b).sum.total-deviceStats(a).sum.total; });
+      }
       function renderDetail(){
         var d=deviceById(detailId);
         if(!d){ detailId=null; renderDevices(); return; }
         var st=deviceStats(detailId);
-        var allSum=summarize(S.sessions);
-        var share= allSum.total>0? st.sum.total/allSum.total : 0;
+        var order=detailOrder();
+        var dayMs=86400000;
+        var t0=new Date(); t0.setHours(0,0,0,0);
+        var todayStart=t0.getTime();
 
-        var html='<div class="detail-rise"><button class="back-btn" type="button" id="btn-back" aria-label="返回设备列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>'
-          + '<h1 style="font-size:30px">'+esc(d.name)+'</h1>'
-          + '<div class="date-line">'+(d.rawName && d.rawName!==d.name? "设备名 "+esc(d.rawName)+" · " : "")+(st.first? "首次使用 "+fmtDate(st.first) : "还没有使用记录")+(idTail(d)? " · 标识 …"+idTail(d) : "")+'</div>';
+        /* 时间范围窗口：7 / 30 / 90 / 365 天，或全部（从第一次使用算起） */
+        var from, days;
+        if(detailRange==="all"){
+          if(st.first!=null){ var fd=new Date(st.first); fd.setHours(0,0,0,0); from=fd.getTime(); }
+          else from=todayStart;
+          days=Math.max(1, Math.round((todayStart-from)/dayMs)+1);
+        }else{
+          days=parseInt(detailRange,10)||30;
+          from=todayStart-(days-1)*dayMs;
+        }
+        var to=todayStart+dayMs-1;
+        function inWin(s){ return s.start>=from && s.start<=to; }
+        var rList=st.list.filter(inWin);
+        var rSum=summarize(rList);
+        var allTot=summarize(S.sessions.filter(inWin)).total;
+        var share= allTot>0? rSum.total/allTot : 0;
+        var avgDay= rSum.total/days;
 
+        /* 环比：紧挨着的上一个等长周期；「全部」没有上个周期，不显示 */
+        var deltaHtml="";
+        if(detailRange!=="all"){
+          var pFrom=from-days*dayMs, pTo=from-1, prev=0;
+          st.list.forEach(function(s){ if(s.start>=pFrom && s.start<=pTo) prev+=durMin(s); });
+          if(prev>0){
+            var pc=(rSum.total-prev)/prev*100, up=pc>=0;
+            deltaHtml=' · 比上个周期 <span style="color:'+(up?"#7fd4a8":"var(--danger)")+';font-weight:650">'+(up?"↑":"↓")+Math.abs(Math.round(pc))+'%</span>';
+          }
+        }
+
+        /* 柱形粒度：≤92 天按天，≤730 天按周，再长按月，柱数保持可读 */
+        var bSize= days<=92? 1 : days<=730? 7 : 30;
+        var bLabel= bSize===1? "每天" : bSize===7? "每周" : "每月";
+        var bCount=Math.max(1, Math.ceil(days/bSize));
+        var buckets=[]; for(var bi=0; bi<bCount; bi++) buckets.push(0);
+        rList.forEach(function(s){
+          var sd=new Date(s.start); sd.setHours(0,0,0,0);
+          var idx=Math.floor((sd.getTime()-from)/(bSize*dayMs));
+          if(idx>=0 && idx<bCount) buckets[idx]+=durMin(s);
+        });
+        var maxBucket=0; buckets.forEach(function(v){ if(v>maxBucket) maxBucket=v; });
+
+        var firstD= st.first? new Date(st.first) : null;
+        var brandLine=[ d.manufacturer? esc(d.manufacturer) : "", firstD? firstD.getFullYear()+"."+pad(firstD.getMonth()+1)+" 起" : "" ].filter(function(x){ return x; }).join(" · ");
+        var lastCap= st.last? "最近使用 "+(new Date(st.last).getMonth()+1)+"月"+(new Date(st.last).getDate())+"日" : "暂无使用记录";
         var him=deviceImg(d);
-        html+='<div class="card">'
-          + '<div class="hero-stage" id="hero-stage"><div class="hero-enter"><div class="hero-float"><div class="hero-tilt">'
+
+        var html='<div class="detail-rise">'
+          + '<div class="d-top"><button class="back-btn" type="button" id="btn-back" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>'
+          + '<span class="d-last">'+lastCap+'</span></div>'
+          + (brandLine? '<div class="d-brand">'+brandLine+'</div>' : '')
+          + '<h1 class="d-title">'+esc(d.name)+(firstD? ' · '+firstD.getFullYear()+'-'+pad(firstD.getMonth()+1) : '')+'</h1>';
+
+        /* 顶部耳机名胶囊：点哪副看哪副，整页数据跟着换 */
+        if(order.length>1){
+          html+='<div class="dswitch" role="group" aria-label="切换耳机">'
+            + order.map(function(id){
+                var dv=deviceById(id), im=deviceImg(dv);
+                return '<button class="dchip'+(id===detailId?" on":"")+'" type="button" data-switch="'+id+'">'
+                  + '<span class="dchip-ic'+(im.cover?" cover":"")+'"><img src="'+im.src+'" alt="" /></span>'
+                  + '<span>'+esc(dv.name)+'</span></button>';
+              }).join("") + '</div>';
+        }
+
+        html+='<div class="hero-stage" id="hero-stage"><div class="hero-enter"><div class="hero-float"><div class="hero-tilt">'
           + '<img '+(him.cover?'class="cover" ':'')+'src="'+him.src+'" alt="'+esc(d.name)+'" draggable="false" />'
           + '<span class="hero-sheen" style="-webkit-mask-image:url('+him.src+');mask-image:url('+him.src+')" aria-hidden="true"></span>'
-          + '</div></div></div><div class="hero-shadow" aria-hidden="true"></div></div>'
-          + '<div class="big-num">'+fmtBigHM(st.sum.total)+'</div>'
-          + '<div class="hero-sub">'+(allSum.total>0? Math.round(share*100)+'% · 占全部聆听时长的比例' : '累计聆听时长')+'</div></div>'
-          + '<div class="stat-grid" style="margin-bottom:16px">'
-          + '<div class="stat-cell"><div class="k">使用天数</div><div class="v">'+st.days+' <small>天</small></div></div>'
-          + '<div class="stat-cell"><div class="k">佩戴次数</div><div class="v">'+st.sum.count+' <small>次</small></div></div>'
-          + '<div class="stat-cell"><div class="k">平均每次</div><div class="v">'+fmtDurHM(st.sum.avgPer)+'</div></div>'
-          + '<div class="stat-cell"><div class="k">最长一次</div><div class="v">'+fmtDurHM(st.sum.longest)+'</div></div>'
-          + '<div class="stat-cell"><div class="k">平均音量</div><div class="v">'+(st.sum.avgVol!=null? st.sum.avgVol+' <small>dB</small>':'—')+'</div></div>'
-          + '<div class="stat-cell"><div class="k">厂商</div><div class="v" style="font-size:15.5px">'+(d.manufacturer? esc(d.manufacturer):'—')+'</div></div>'
-          + '<div class="stat-cell"><div class="k">型号代码</div><div class="v" style="font-size:15.5px">'+((d.model||d.hardware)? esc(d.model||d.hardware):'—')+'</div></div>'
-          + '<div class="stat-cell"><div class="k">蓝牙标识</div><div class="v" style="font-size:13px;white-space:normal;word-break:break-all;line-height:1.35">'+(d.localId? esc(d.localId.toUpperCase()):'—')+'</div></div>'
-          + '</div>';
+          + '</div></div></div><div class="hero-shadow" aria-hidden="true"></div></div>';
 
-        if(S.devices.length>1 && allSum.total>0){
-          var C=2*Math.PI*34;
-          var others=S.devices.filter(function(x){ return x.id!==detailId; });
-          var legend='<div class="row"><span class="dot" style="background:'+PALETTE[0]+'"></span><span class="lg-name">'+esc(d.name)+tailSpanHtml(d)+'</span><b>'+Math.round(share*100)+'%</b></div>';
-          others.forEach(function(o,i){
-            var os=deviceStats(o.id).sum;
-            var pct=allSum.total>0? Math.round(os.total/allSum.total*100):0;
-            legend+='<div class="row"><span class="dot" style="background:'+PALETTE[(i+1)%PALETTE.length]+'"></span><span class="lg-name">'+esc(o.name)+tailSpanHtml(o)+'</span><b>'+pct+'%</b></div>';
-          });
-          html+='<div class="card"><h2>占全部聆听的比例</h2><div class="donut-wrap">'
-            + gradRing(share, '<div class="ring-big" style="font-size:25px">'+Math.round(share*100)+'%</div>', 104)
-            + '<div class="donut-legend">'+legend+'</div></div></div>';
-        }
+        var ranges=[["7","7天"],["30","30天"],["90","90天"],["365","1年"],["all","全部"]];
+        html+='<div class="seg drange" role="group" aria-label="时间范围">'
+          + ranges.map(function(r){ return '<button type="button" data-drange="'+r[0]+'" class="'+(detailRange===r[0]?"on":"")+'">'+r[1]+'</button>'; }).join("") + '</div>'
+          + '<div class="ddates"><span class="ddate">'+fmtDate(from)+'</span><span class="darrow">→</span><span class="ddate">'+fmtDate(to)+'</span></div>'
+          + '<div class="d-label">这段时间的聆听时长</div>'
+          + '<div class="dbig">'+fmtHuge(rSum.total)+'</div>'
+          + '<div class="d-sub">日均 '+fmtDur(avgDay)+' · 占全部耳机 '+Math.round(share*100)+'%'+deltaHtml+'</div>'
+          + '<div class="d-chart-head"><span>'+bLabel+'</span><span>最高 '+fmtDur(maxBucket)+'</span></div>'
+          + '<div class="bars wbars tall">'
+          + buckets.map(function(v,i){
+              var bs=from+i*bSize*dayMs;
+              var lbl= bSize===1? fmtDate(bs) : fmtDate(bs)+" 起";
+              var pct= maxBucket>0? Math.max(2, v/maxBucket*100) : 2;
+              return '<button class="bar-col'+(v>0?" on":"")+'" type="button" data-dbar="'+i+'" data-dlabel="'+esc(lbl)+'" data-dval="'+v+'" aria-label="'+esc(lbl)+'，聆听'+fmtDur(v)+'"><span class="bar" style="height:'+pct+'%"></span></button>';
+            }).join("")
+          + '</div>'
+          + '<div class="chart-note" id="dday-note">'+(rSum.total>0? '轻点柱形，查看那'+(bSize===1?"一":"段")+'时间听了多久' : '这段时间没有记录，换个范围看看')+'</div>';
+
+        /* 设备信息：一张小卡说清型号代码与全时段累计，不在主视觉里堆数字 */
+        html+='<div class="card" style="margin-top:18px"><h2>设备信息</h2><p class="note" style="margin:0">'
+          + (devSpec(d)? esc(devSpec(d))+'<br/>' : '')
+          + '累计（全部时间）'+fmtDurHM(st.sum.total)+' · '+st.sum.count+' 次 · '+st.days+' 天'
+          + (st.sum.longest? '<br/>最长一次 '+fmtDurHM(st.sum.longest) : '')
+          + (st.sum.avgVol!=null? '<br/>平均音量 '+st.sum.avgVol+' dB' : '')
+          + '</p></div>';
 
         html+='<div class="sec-head"><h2>最近记录</h2>'+(st.list.length? '<span>共 '+st.list.length+' 条</span>' : '')+'</div>';
         if(st.list.length){
@@ -1498,7 +1671,6 @@
         }else{
           html+='<div class="card"><p class="hero-sub" style="margin:0">这副耳机还没有记录，用计时或手动补录记一条吧。</p></div>';
         }
-
         html+='<div class="btn-row"><button class="btn danger block" type="button" id="btn-deldev">删除这副耳机及其记录</button></div></div>';
 
         viewEl.innerHTML=html;
@@ -1517,13 +1689,58 @@
             setTimeout(function(){ b.removeAttribute("data-arm"); b.textContent="删除这副耳机及其记录"; },3000);
           }
         });
+        /* 范围切换：只换时间窗口，滚动位置保持不动 */
+        viewEl.querySelectorAll("[data-drange]").forEach(function(b){
+          b.addEventListener("click", function(){
+            if(detailRange===b.getAttribute("data-drange")) return;
+            detailRange=b.getAttribute("data-drange");
+            var y=window.scrollY||0;
+            render();
+            window.scrollTo(0,y);
+          });
+        });
+        /* 点顶部耳机名胶囊切换：整页数据跟着换 */
+        viewEl.querySelectorAll("[data-switch]").forEach(function(b){
+          b.addEventListener("click", function(){
+            var id=b.getAttribute("data-switch");
+            if(id && id!==detailId){ detailId=id; render(); }
+          });
+        });
+        /* 柱形点选：就地更新说明文字，不整页重渲 */
+        viewEl.querySelectorAll("[data-dbar]").forEach(function(b){
+          b.addEventListener("click", function(){
+            var note=document.getElementById("dday-note");
+            if(note) note.innerHTML=esc(b.getAttribute("data-dlabel"))+"：聆听 <b>"+fmtDurHM(parseFloat(b.getAttribute("data-dval")))+"</b>";
+            viewEl.querySelectorAll("[data-dbar]").forEach(function(x){ x.classList.remove("sel"); });
+            b.classList.add("sel");
+          });
+        });
+        /* 左右滑动切换耳机（耳机名胶囊行是横向滚动选耳机，在它上面滑动不触发翻页） */
+        var rise=viewEl.querySelector(".detail-rise");
+        if(rise && order.length>1){
+          var sx=0, sy=0, swOn=false;
+          rise.addEventListener("touchstart", function(e){
+            swOn=false;
+            if(e.target && e.target.closest && e.target.closest(".dswitch")) return;
+            if(e.touches.length===1){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; swOn=true; }
+          }, { passive:true });
+          rise.addEventListener("touchend", function(e){
+            if(!swOn) return; swOn=false;
+            var t=e.changedTouches && e.changedTouches[0]; if(!t) return;
+            var dx=t.clientX-sx, dy=t.clientY-sy;
+            if(Math.abs(dx)>72 && Math.abs(dx)>Math.abs(dy)*1.7){
+              var idx=order.indexOf(detailId), nx=idx+(dx<0?1:-1);
+              if(nx>=0 && nx<order.length){ detailId=order[nx]; render(); }
+            }
+          }, { passive:true });
+        }
       }
 
       /* ---------- 入场编排：全页同一节奏，卡片依次升起（只加 class / CSS 变量，不动数据） ---------- */
       function applyEntrance(){
         if(reducedMotion()) return;
         var isDetail=!!detailId;
-        var els=viewEl.querySelectorAll(".banner, .card, .rec-card, .dev-card, .seg");
+        var els=viewEl.querySelectorAll(".banner, .card, .rec-card, .dev-card, .feat-card, .seg");
         els.forEach(function(el,i){
           /* 详情页第一张卡已由 .detail-rise 的弹簧升起负责，不叠第二套动画 */
           if(isDetail && el.classList.contains("card") && el.parentElement && el.parentElement.classList.contains("detail-rise") && el===el.parentElement.querySelector(".card")) return;
