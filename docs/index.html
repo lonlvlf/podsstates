@@ -11,7 +11,16 @@
     <!-- 状态栏用不透明黑：black-translucent 会让页面钻到状态栏底下，iOS 的顶部磨砂/滚动边缘处理会把正好在那片区域的大标题和日期一起虚掉；黑色状态栏自带一块不透明区域，内容永远从它下方开始，与页面近黑的顶部背景衔接无痕 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Pods Stats" />
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".","background_color":"%230b0f14","theme_color":"%230b0f14"}' />
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=15","background_color":"%230b0f14","theme_color":"%230b0f14"}' />
+    <!-- 主屏幕 App 会把旧页面缓存得很死：明确要求不缓存，让布局修正能真正下发到已添加的图标 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <script>
+      /* iOS 主屏幕模式检测（display-mode 媒体查询之外的兜底）：standalone 时给
+         html 加类，CSS 据此把页头整体下压，离开顶部磨砂带。必须在渲染前跑。 */
+      if (window.navigator && navigator.standalone) document.documentElement.classList.add("ios-standalone");
+    </script>
     <link rel="icon" href="data:," />
     <title>Pods Stats · 耳机聆听统计</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -94,10 +103,25 @@
       /* bottom padding must clear the floating tab bar (bar ≈72px tall, 12px above
          the viewport edge, plus the safe-area inset) with room to spare, so the
          last card on any page can always scroll fully above it */
-      /* top padding includes the safe-area inset: in cover layout (browser chrome,
-         in-app webviews) the header must start BELOW the status-bar / notch zone,
-         never inside the system's frosted top band that blurs whatever sits in it */
-      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 18px calc(140px + env(safe-area-inset-bottom))}
+      /* Top padding: the header must sit well BELOW the status-bar / notch zone.
+         The safe-area inset alone is NOT enough: a home-screen icon created while
+         the page used a translucent status bar keeps that style baked in, so the
+         page still runs under the status bar and iOS's frosted top band reaches
+         roughly another status-bar height below the safe area — the previous
+         build's title sat right inside it and stayed blurred no matter what the
+         status-bar meta said. So the layout itself carries a generous fixed
+         offset on top of the inset, in every mode. */
+      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:calc(30px + env(safe-area-inset-top)) 18px calc(140px + env(safe-area-inset-bottom))}
+      /* Home-screen (standalone) mode: push the whole column further down still.
+         With a translucent status bar the inset reports the full notch height
+         (~47–59px), so the header then starts ~100px+ from the screen top —
+         completely clear of the frosted band even if the icon's baked-in
+         status-bar style never updates. With an opaque black status bar the
+         inset is 0 and the header simply gets calm app-like top spacing. */
+      @media (display-mode:standalone),(display-mode:fullscreen){
+        .wrap{padding-top:calc(54px + env(safe-area-inset-top))}
+      }
+      html.ios-standalone .wrap{padding-top:calc(54px + env(safe-area-inset-top))}
       /* Page headers (all three tabs render h1 + .date-line) are pinned to their own
          top layer inside the content stacking context: no decorative layer of the
          page (bg orbs, grid, grain — all z-index 0) can ever paint or frost over
