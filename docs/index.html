@@ -1498,44 +1498,63 @@
         });
         return { added:added, skipped:skipped, samples:samples.length };
       }
-      function parseHealthXmlAsync(text, onP){
-        /* 分片扫描：每片处理一批记录就让出主线程，进度环能平滑推进，
-           几百 MB 的导出文件也不会把页面卡死。 */
-        return new Promise(function(resolve){
-          var needle="HeadphoneAudioExposure";
-          var samples=[], invalid=0, pos=0, len=text.length;
-          function step(){
-            if(importCancelled){ resolve(null); return; }
-            var n=0;
-            while(pos<len && n<2000){
-              var i=text.indexOf(needle, pos);
-              if(i===-1){ pos=len; break; }
-              var ts=text.lastIndexOf("<Record", i);
-              if(ts===-1){ pos=i+needle.length; continue; }
-              var te=text.indexOf(">", ts);
-              if(te===-1){ pos=len; break; }
-              pos=te+1; n++;
-              if(te-ts>4000) continue;
-              var tag=text.slice(ts, te+1);
-              if(tag.indexOf(needle)===-1) continue;
-              var attrs={};
-              var aRe=/(\w+)="([^"]*)"/g, a;
-              while((a=aRe.exec(tag))!==null) attrs[a[1]]=a[2];
-              if(!attrs.type || attrs.type.indexOf(needle)===-1) continue;
-              var start=parseHealthDate(attrs.startDate), end=parseHealthDate(attrs.endDate);
-              if(isNaN(start)||isNaN(end)||end<=start){ invalid++; continue; }
-              var vol=null;
-              if(attrs.value!=null){
-                var v=parseFloat(attrs.value); if(!isNaN(v)) vol=Math.round(v*10)/10;
-              }
-              samples.push({ start:start, end:end, vol:vol, info:healthDeviceInfo(attrs) });
+      function createHealthScanner(){
+        /* 流式扫描：解压/读取到的文本一片片喂进来，内存里只留一小段尾巴，
+           凑齐一条完整的 <Record ...> 就处理一条。
+           旧做法是把几百 MB 的 XML 一次性解压成一整个字符串，光这一步在
+           手机上就要占一两 GB 内存，系统会直接把页面杀掉（导入时“崩掉”）。
+           现在全程流式，内存占用与文件大小基本无关。
+           每条记录单独 try/catch：格式再怪也只是跳过这一条，不中断整个导入。 */
+        var needle="HeadphoneAudioExposure";
+        var samples=[], invalid=0;
+        var buf="";
+        function handleTag(tag){
+          if(tag.indexOf(needle)===-1) return;
+          var attrs={};
+          var aRe=/(\w+)="([^"]*)"/g, a;
+          while((a=aRe.exec(tag))!==null) attrs[a[1]]=a[2];
+          if(!attrs.type || attrs.type.indexOf(needle)===-1) return;
+          try{
+            var start=parseHealthDate(attrs.startDate), end=parseHealthDate(attrs.endDate);
+            if(isNaN(start)||isNaN(end)||end<=start){ invalid++; return; }
+            var vol=null;
+            if(attrs.value!=null){
+              var v=parseFloat(attrs.value); if(!isNaN(v)) vol=Math.round(v*10)/10;
             }
-            onP(len? pos/len : 1);
-            if(pos<len) setTimeout(step, 0);
-            else resolve(mergeHealthSamples(samples, invalid));
+            samples.push({ start:start, end:end, vol:vol, info:healthDeviceInfo(attrs) });
+          }catch(e){ invalid++; }
+        }
+        function scan(final){
+          var pos=0;
+          while(true){
+            var i=buf.indexOf(needle, pos);
+            if(i===-1){
+              if(final){ buf=""; }
+              else{
+                /* 没找到：只保留尾巴——最后一个 <Record 起的部分（它的 needle
+                   可能还没喂进来），或最后 8KB（防 needle 正好跨在两片之间） */
+                var lr=buf.lastIndexOf("<Record");
+                buf= lr===-1 ? buf.slice(Math.max(0, buf.length-8192)) : buf.slice(lr);
+              }
+              return;
+            }
+            var ts=buf.lastIndexOf("<Record", i);
+            if(ts===-1){ pos=i+needle.length; continue; }
+            var te=buf.indexOf(">", ts);
+            if(te===-1){
+              if(final){ buf=""; return; }
+              if(buf.length-ts>4194304){ invalid++; buf=""; return; } /* 病态超长标签，跳过 */
+              buf=buf.slice(ts); return; /* 标签还没喂完，等下一片 */
+            }
+            if(te-ts<=4000) handleTag(buf.slice(ts, te+1));
+            pos=te+1;
+            if(pos>262144){ buf=buf.slice(pos); pos=0; }
           }
-          step();
-        });
+        }
+        return {
+          feed:function(str){ if(str){ buf+=str; scan(false); } },
+          end:function(){ scan(true); return mergeHealthSamples(samples, invalid); }
+        };
       }
       /* ---------- 导入进度界面（大玻璃卡 + 渐变圆环 + 数字补间） ---------- */
       var importCancelled=false, iprogDone=false;
@@ -1622,17 +1641,32 @@
           hideIprog();
           status.textContent=msg||"文件读取失败，换一个文件再试。";
         }
-        function parse(text, base, span){
-          if(importCancelled) return;
-          parseHealthXmlAsync(text, function(p){ setIprog(base+span*p); }).then(function(r){
-            if(r==null || importCancelled) return;
-            finish(r);
-          }, function(){ fail("解析失败，换 export.xml 再试一次。"); });
+        /* 解压与解析全程流式：字节一片片进来，解码、扫描同步进行，
+           不再把整个 XML 装进一个字符串，手机上也不会内存爆掉。 */
+        var scanner=createHealthScanner();
+        var decoder=(typeof TextDecoder!=="undefined")? new TextDecoder("utf-8") : null;
+        var streamDead=false;
+        function feedBytes(u8){
+          if(streamDead || !u8 || !u8.length) return;
+          if(decoder){ scanner.feed(decoder.decode(u8, { stream:true })); return; }
+          /* 极旧浏览器没有 TextDecoder：退回整段解码（小文件才走这条路也没关系） */
+          var s="";
+          for(var j=0;j<u8.length;j++) s+=String.fromCharCode(u8[j]);
+          scanner.feed(s);
         }
+        function streamDone(){
+          if(importCancelled || streamDead) return;
+          streamDead=true;
+          try{
+            if(decoder) scanner.feed(decoder.decode());
+            finish(scanner.end());
+          }catch(e){ fail("解析失败，换 export.xml 再试一次。"); }
+        }
+        function streamFail(){ if(!streamDead){ streamDead=true; fail(); } }
         if(/\.zip$/i.test(file.name)){
           if(typeof JSZip==="undefined"){ fail("解压组件没加载成功（可能没网），请解压后选里面的 export.xml。"); return; }
           JSZip.loadAsync(file, { onUpdate:function(m){ setIprog(m.percent*0.16); } }).then(function(zip){
-            if(importCancelled) return null;
+            if(importCancelled) return;
             /* 主数据文件名随系统语言变：英文 export.xml、中文「导出.xml」；
                包里还有 export_cda.xml（临床文档格式，没有 Record 记录），绝不能选它。 */
             var xmls=[];
@@ -1651,24 +1685,40 @@
               mains.sort(function(x,y){ return usize(y)-usize(x); });
               target=mains[0];
             }
-            if(!target){ fail("压缩包里没找到健康数据文件（export.xml / 导出.xml）。"); return null; }
-            return target.async("string", function(m){ setIprog(16+m.percent*0.34); });
-          }).then(function(text){
-            if(text==null || importCancelled) return;
-            parse(text, 50, 48);
+            if(!target){ fail("压缩包里没找到健康数据文件（export.xml / 导出.xml）。"); return; }
+            var stream=target.internalStream("uint8array");
+            stream.on("data", function(chunk, meta){
+              if(importCancelled){ try{ stream.pause(); }catch(e){} return; }
+              try{ feedBytes(chunk); }catch(e){ streamFail(); }
+              if(meta && typeof meta.percent==="number") setIprog(16+meta.percent*0.82);
+            });
+            stream.on("error", function(){ streamFail(); });
+            stream.on("end", function(){ streamDone(); });
+            stream.resume();
           }, function(){ fail(); });
         }else{
-          var rd=new FileReader();
-          rd.onprogress=function(ev){
-            if(ev.lengthComputable) setIprog(ev.loaded/ev.total*46);
-          };
-          rd.onload=function(){
-            if(importCancelled) return;
-            setIprog(46);
-            parse(String(rd.result||""), 46, 52);
-          };
-          rd.onerror=function(){ fail(); };
-          rd.readAsText(file);
+          /* .xml 直读：按 4MB 切片读，同样不整文件进内存 */
+          var off=0, CH=4*1024*1024;
+          function readSlice(blob){
+            if(blob.arrayBuffer) return blob.arrayBuffer().then(function(b){ return new Uint8Array(b); });
+            return new Promise(function(res, rej){
+              var fr=new FileReader();
+              fr.onload=function(){ res(new Uint8Array(fr.result)); };
+              fr.onerror=function(){ rej(new Error("read")); };
+              fr.readAsArrayBuffer(blob);
+            });
+          }
+          (function next(){
+            if(importCancelled || streamDead) return;
+            if(off>=file.size){ streamDone(); return; }
+            readSlice(file.slice(off, off+CH)).then(function(u8){
+              if(importCancelled || streamDead) return;
+              try{ feedBytes(u8); }catch(e){ streamFail(); return; }
+              off+=CH;
+              setIprog(Math.min(98, file.size? off/file.size*98 : 98));
+              next();
+            }, function(){ streamFail(); });
+          })();
         }
       }
 
