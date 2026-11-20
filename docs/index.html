@@ -448,6 +448,16 @@
         .sheet,.sheet-bg.open .sheet{transform:none!important}
         .btn:active,.tab:active,.dev-card:active,.rec-card:active,.back-btn:active,.icon-btn:active,.bar-col:active{transform:none!important}
       }
+      /* home: timer is an auxiliary tool — one quiet compact card, never a hero */
+      .timer-mini{padding:15px 17px}
+      .timer-mini .tm-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+      .timer-mini .tm-title{font-size:14.5px;font-weight:650}
+      .timer-mini .tm-note{font-size:12.5px;color:var(--faint);flex:none}
+      .timer-mini .tm-row{display:flex;gap:9px;align-items:center;margin-top:10px}
+      .timer-mini .tm-row select{flex:1;min-width:0}
+      .timer-mini .tm-row .btn{flex:none;padding:8px 16px;font-size:14px}
+      .timer-mini .timer-face{font-size:27px;padding:4px 0 0;text-align:left}
+      .timer-mini .timer-state{text-align:left;margin:0 0 2px}
       .hidden{display:none!important}
       .note{font-size:13px;color:var(--faint);margin-top:10px;line-height:1.6}
       .import-status{font-size:14px;color:var(--sub);margin-top:10px;min-height:20px}
@@ -462,16 +472,12 @@
     <nav class="tabbar" aria-label="主导航">
       <div class="tabbar-in">
         <button class="tab" data-tab="today" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
-          今天
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.5v-2a8 8 0 0 1 16 0v2"/><rect x="2.8" y="13.5" width="4.4" height="7" rx="2.2"/><rect x="16.8" y="13.5" width="4.4" height="7" rx="2.2"/></svg>
+          主页
         </button>
         <button class="tab" data-tab="stats" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M21 20H3"/></svg>
           统计
-        </button>
-        <button class="tab" data-tab="devices" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.5v-2a8 8 0 0 1 16 0v2"/><rect x="2.8" y="13.5" width="4.4" height="7" rx="2.2"/><rect x="16.8" y="13.5" width="4.4" height="7" rx="2.2"/></svg>
-          设备
         </button>
       </div>
     </nav>
@@ -555,7 +561,7 @@
           <li>点<b>「添加到主屏幕」</b>或<b>「安装应用」</b></li>
           <li>确认后图标会出现在桌面上</li>
         </ol>
-        <p class="note">如果现在是在 Muse 里打开的，先点右上角菜单选「在浏览器中打开」，再按上面步骤操作。你的聆听记录保存在这台手机的浏览器里，换手机或清浏览器数据前，记得在「设备」页导出一份备份。</p>
+        <p class="note">如果现在是在 Muse 里打开的，先点右上角菜单选「在浏览器中打开」，再按上面步骤操作。你的聆听记录保存在这台手机的浏览器里，换手机或清浏览器数据前，记得在主页底部的「数据管理」里导出一份备份。</p>
         <div class="btn-row">
           <button class="btn primary block" type="button" data-close>知道了</button>
         </div>
@@ -955,7 +961,7 @@
         var d=new Date();
         var weekNames=["周日","周一","周二","周三","周四","周五","周六"];
 
-        var html=pageHead("今天", d.getFullYear()+"."+pad(d.getMonth()+1)+"."+pad(d.getDate())+" · "+weekNames[d.getDay()]);
+        var html=pageHead("耳机使用情况", d.getFullYear()+"."+pad(d.getMonth()+1)+"."+pad(d.getDate())+" · "+weekNames[d.getDay()]);
 
         html+='<div class="banner"><div class="ic">'+ICON_PHONE+'</div>'
           + '<div class="tx"><b>放进手机主屏幕</b><span>添加后点图标就能打开，跟 App 一样</span></div>'
@@ -963,7 +969,7 @@
 
         if(!S.devices.length && !S.sessions.length){
           html+=emptyState("还没有任何记录",
-            "导入 iPhone 健康里的耳机数据，就能看到你真实的聆听统计；也可以先添加耳机，用计时或手动补录记起来。",
+            "导入 iPhone 健康里的耳机数据，就能看到每副耳机的真实使用情况；也可以先添加耳机，再手动补录几条。",
             '<button class="btn primary" type="button" data-open="sheet-import">导入健康数据</button>'
             + '<button class="btn" type="button" data-open="sheet-device">添加耳机</button>');
         }
@@ -997,27 +1003,48 @@
               : '轻点柱形，查看那个小时听了多久')
           + '</div></div>';
 
-        /* 计时卡 */
-        html+='<div class="card"><h2>正在佩戴</h2>';
+        /* 计时只是辅助：数据主要来自健康导入。运行中贴一条小条在主卡下面，
+           没在计时就只在页尾留一个小入口，不占主页的位置。 */
+        var timerHtml="";
         if(S.timer){
           var td=deviceById(S.timer.device);
-          html+='<div class="timer-live">'+devThumb(td||"", "lg")+'</div>'
+          timerHtml='<div class="card timer-mini">'
+            + '<div class="tm-head"><span class="tm-title"><span class="pulse"></span>'+esc(td?td.name:"耳机")+' · 计时中</span><span class="tm-note">辅助记录</span></div>'
             + '<div class="timer-face" id="timer-face">00:00:00</div>'
-            + '<div class="timer-state"><span class="pulse"></span>'+esc(td?td.name:"耳机")+' · 计时中</div>'
             + '<label class="f" for="timer-vol">平均音量 dB（可空，停的时候填也行）</label>'
             + '<input type="number" id="timer-vol" min="0" max="130" inputmode="decimal" placeholder="例如：62" />'
-            + '<div class="btn-row" style="margin-top:14px"><button class="btn danger" type="button" id="timer-cancel">取消</button>'
-            + '<button class="btn primary" type="button" id="timer-stop">停止并保存</button></div>';
+            + '<div class="btn-row" style="margin-top:12px"><button class="btn danger" type="button" id="timer-cancel">取消</button>'
+            + '<button class="btn primary" type="button" id="timer-stop">停止并保存</button></div></div>';
         }else if(S.devices.length){
           var opts=S.devices.map(function(dv){ return '<option value="'+dv.id+'">'+esc(pickerLabel(dv))+'</option>'; }).join("");
-          html+='<label class="f" for="timer-device">选择耳机，戴上时开始计时，摘下时停止</label>'
-            + '<div class="timer-pick">'+devThumb(S.devices[0], "lg")+'<select id="timer-device">'+opts+'</select></div>'
-            + '<button class="btn primary block" type="button" id="timer-start" style="margin-top:12px">开始计时</button>';
-        }else{
-          html+='<p class="hero-sub" style="margin:0">先添加一副耳机，就能在这里一键计时记录佩戴。</p>'
-            + '<button class="btn block" type="button" data-open="sheet-device" style="margin-top:12px">添加耳机</button>';
+          timerHtml='<div class="card timer-mini">'
+            + '<div class="tm-head"><span class="tm-title">计时记录</span><span class="tm-note">没导入数据时偶尔用一下</span></div>'
+            + '<div class="tm-row"><select id="timer-device" aria-label="选择耳机">'+opts+'</select>'
+            + '<button class="btn" type="button" id="timer-start">开始计时</button></div></div>';
         }
-        html+='</div>';
+        if(S.timer) html+=timerHtml;
+
+        /* 我的耳机（原设备页的主体）：每副耳机的累计使用情况，点开看详情 */
+        if(S.devices.length){
+          html+='<div class="sec-head"><h2>我的耳机</h2><span>共 '+S.devices.length+' 副 · 点开看详情</span></div>';
+          var order=S.devices.map(function(dv){ return { d:dv, st:deviceStats(dv.id) }; })
+            .sort(function(a,b){ return b.st.sum.total-a.st.sum.total; });
+          order.forEach(function(o){
+            html+='<button class="dev-card" type="button" data-dev="'+o.d.id+'">'
+              + devThumb(o.d)
+              + '<span class="dev-main"><span class="dev-name">'+esc(o.d.name)+'</span>'
+              + '<span class="dev-total" style="display:block">'+fmtDurHM(o.st.sum.total)+'</span>'
+              + '<span class="dev-meta">'+o.st.days+' 天 · '+o.st.sum.count+' 次'
+              + (o.st.sum.avgVol!=null? ' · 平均 '+o.st.sum.avgVol+' dB':'')
+              + '</span>'
+              + (devSpec(o.d)? '<span class="dev-sub">'+esc(devSpec(o.d))+'</span>' : '')
+              + '</span>'
+              + '<span class="chev">'+ICON_CHEV+'</span></button>';
+          });
+          html+='<button class="btn block" type="button" data-open="sheet-device">＋ 添加耳机</button>';
+          html+='<div class="card" style="margin-top:14px"><h2>设备是怎么识别的</h2>'
+            + '<p class="note" style="margin:0">按健康导出里每副耳机自带的<b style="color:var(--sub)">蓝牙型号代码</b>认款式——比如 0x2014 是 AirPods Pro 第二代、0x200E 是第一代、0x2002 是 AirPods 第一代，蓝牙名字都叫「AirPods Pro」时也能分开。再按<b style="color:var(--sub)">蓝牙标识</b>区分同一款式的不同耳机：同型号的两副耳机标识不同，单独统计、不合并。型号代码对不上已知款式时，名字后面会带上原始代码。</p></div>';
+        }
 
         /* 今日记录 */
         html+='<div class="sec-head"><h2>聆听记录</h2>'+(todayList.length? '<span>今天共 '+todayList.length+' 条</span>' : '')+'</div>';
@@ -1031,9 +1058,42 @@
           + '<button class="btn" type="button" data-open="sheet-import">导入健康数据</button>'
           + '</div>';
 
+        /* 没在计时：计时入口压到页尾，只占一行小卡 */
+        if(!S.timer) html+=timerHtml;
+
+        /* 数据管理（原设备页底部，一并搬到主页） */
+        html+='<div class="card" style="margin-top:14px"><h2>数据管理</h2>'
+          + '<div class="btn-row">'
+          + '<button class="btn" type="button" data-open="sheet-import">导入健康数据</button>'
+          + '<button class="btn" type="button" id="btn-export">导出备份</button></div>'
+          + '<div class="btn-row" style="margin-top:10px">'
+          + '<button class="btn" type="button" id="btn-restore">恢复备份</button>'
+          + '<button class="btn danger" type="button" id="btn-clear">清空全部数据</button></div>'
+          + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p></div>';
+
         viewEl.innerHTML=html;
         bindCommon();
+        bindHomeExtras();
         if(S.timer) startTimerTick();
+      }
+      /* 主页上的设备卡跳转 + 数据管理按钮（与原设备页同一套行为） */
+      function bindHomeExtras(){
+        viewEl.querySelectorAll("[data-dev]").forEach(function(b){
+          b.addEventListener("click", function(){ detailId=b.getAttribute("data-dev"); render(); });
+        });
+        var ex=document.getElementById("btn-export");
+        if(ex) ex.addEventListener("click", exportBackup);
+        var rs=document.getElementById("btn-restore");
+        if(rs) rs.addEventListener("click", function(){ document.getElementById("restore-file").click(); });
+        var cl=document.getElementById("btn-clear");
+        if(cl) cl.addEventListener("click", function(){
+          if(cl.getAttribute("data-arm")){
+            S={devices:[],sessions:[],timer:null}; save(); detailId=null; toast("已清空全部数据"); render();
+          }else{
+            cl.setAttribute("data-arm","1"); cl.textContent="再点一次确认清空";
+            setTimeout(function(){ cl.removeAttribute("data-arm"); cl.textContent="清空全部数据"; },3000);
+          }
+        });
       }
 
       /* ---------- 统计 ---------- */
