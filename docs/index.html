@@ -53,43 +53,46 @@
         font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
         font-size:16px;line-height:1.5;min-height:100vh;min-height:100dvh;
         background-color:#0a2436;
-      }
-      body::before{
-        content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-        background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
-        background-size:46px 46px;
-        -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.7),rgba(0,0,0,.28) 65%,rgba(0,0,0,.10));
-        mask-image:linear-gradient(180deg,rgba(0,0,0,.7),rgba(0,0,0,.28) 65%,rgba(0,0,0,.10));
-      }
-      /* Fine grain + slow-drifting light blobs behind the glass (transform/opacity only) */
-      body::after{
-        content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
-        opacity:.05;mix-blend-mode:overlay;
-      }
-      /* Full-viewport backdrop layer: fixed + inset:0 + 100vw/100dvh so the gradient
-         always covers the whole window at any size — phone, desktop, stretched or
-         zoomed — independent of how tall the content gets. No black edges. */
-      .bg-orbs{
-        position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;z-index:0;pointer-events:none;overflow:hidden;
-        background:
+        /* The one and only gradient layer, painted on the document itself so it spans
+           the full document height at any window size — no fixed viewport-height layer
+           means no hard tonal step where such a layer would end on long pages. */
+        background-image:
           radial-gradient(90% 52% at 88% -6%, rgba(86,182,224,.46), rgba(86,182,224,0) 62%),
           radial-gradient(78% 46% at -12% 6%, rgba(46,128,178,.38), rgba(46,128,178,0) 58%),
           radial-gradient(70% 42% at 108% 62%, rgba(38,92,148,.26), rgba(38,92,148,0) 62%),
-          radial-gradient(62% 36% at 8% 88%, rgba(22,74,112,.30), rgba(22,74,112,0) 60%),
+          radial-gradient(56% 28% at 6% 80%, rgba(22,74,112,.28), rgba(22,74,112,0) 62%),
           linear-gradient(180deg,#144766 0%, #0c2b42 30%, #071c2e 58%, #0a2436 100%);
-        background-color:#0a2436;
+        position:relative;
+      }
+      body::before{
+        content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+        background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+        background-size:46px 46px;
+        -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.7),rgba(0,0,0,.28) 65%,rgba(0,0,0,0) 96%);
+        mask-image:linear-gradient(180deg,rgba(0,0,0,.7),rgba(0,0,0,.28) 65%,rgba(0,0,0,0) 96%);
+      }
+      /* Fine grain + slow-drifting light blobs behind the glass (transform/opacity only) */
+      body::after{
+        content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+        opacity:.05;mix-blend-mode:overlay;
+      }
+      /* Fixed layer carrying ONLY the drifting light orbs (transparent background):
+         the gradient itself lives on body, so this layer has no color of its own
+         that could end at the viewport edge. */
+      .bg-orbs{
+        position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
       }
       .bg-orbs i{position:absolute;border-radius:50%;filter:blur(46px);will-change:transform,opacity}
       .bg-orbs i:nth-child(1){width:340px;height:340px;left:-90px;top:-70px;background:rgba(84,178,232,.34);animation:orbDrift 22s ease-in-out infinite alternate}
       .bg-orbs i:nth-child(2){width:280px;height:280px;right:-80px;top:34%;background:rgba(52,118,186,.26);animation:orbDrift 26s ease-in-out infinite alternate-reverse}
-      .bg-orbs i:nth-child(3){width:240px;height:240px;left:12%;bottom:-90px;background:rgba(30,88,138,.28);animation:orbDrift 30s ease-in-out infinite alternate}
+      .bg-orbs i:nth-child(3){width:210px;height:210px;left:12%;bottom:5%;background:rgba(30,88,138,.28);animation:orbDrift 30s ease-in-out infinite alternate}
       @keyframes orbDrift{from{transform:translate3d(0,0,0) scale(1);opacity:.85}to{transform:translate3d(26px,34px,0) scale(1.08);opacity:1}}
       button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]){min-height:2.25rem}
       button{font:inherit;cursor:pointer}
-      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:24px 18px 124px}
-      h1{font-size:34px;font-weight:800;letter-spacing:-.01em;margin:2px 0 2px}
-      .date-line{color:var(--sub);font-size:15px;margin-bottom:18px;font-variant-numeric:tabular-nums}
+      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:12px 18px calc(118px + env(safe-area-inset-bottom))}
+      h1{font-size:32px;font-weight:800;letter-spacing:-.01em;margin:0 0 2px}
+      .date-line{color:var(--sub);font-size:15px;margin-bottom:12px;font-variant-numeric:tabular-nums}
       h2{font-size:19px;font-weight:700;margin:0}
       /* ——— Apple glass material: layered translucent fill, blur(24px) saturate(180%),
          1px inner top highlight + soft large shadow, specular top edge ——— */
@@ -98,7 +101,7 @@
         background:linear-gradient(155deg,rgba(255,255,255,.17) 0%,rgba(255,255,255,.08) 38%,rgba(255,255,255,.05) 62%,rgba(255,255,255,.10) 100%);
         border:1px solid var(--glass-brd);border-radius:28px;box-shadow:var(--shadow);
         backdrop-filter:blur(24px) saturate(180%) brightness(1.06);-webkit-backdrop-filter:blur(24px) saturate(180%) brightness(1.06);
-        padding:20px;margin-bottom:16px;
+        padding:20px;margin-bottom:12px;
       }
       .card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 34%);opacity:.55}
       .card>*{position:relative;z-index:1}
@@ -113,11 +116,11 @@
       .detail-rise{animation:springUp 640ms var(--ease) both;will-change:transform,opacity}
       .view-fade{animation:fadeIn var(--dur) var(--ease) both}
       .card h2{margin-bottom:10px}
-      .big-num{font-size:52px;font-weight:800;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums;margin-top:6px}
+      .big-num{font-size:52px;font-weight:800;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:4px}
       .big-num small{font-size:20px;font-weight:600;color:var(--sub);letter-spacing:0}
       .hero-label{display:flex;align-items:center;gap:9px;font-size:18px;font-weight:700}
       .hero-label svg{width:23px;height:23px;color:var(--accent-ink)}
-      .hero-sub{color:var(--sub);font-size:15px;margin-top:5px}
+      .hero-sub{color:var(--sub);font-size:15px;margin-top:3px}
       .hero-glyph{display:flex;justify-content:center;padding:14px 0 4px;color:#eaf5ff}
       .hero-glyph svg{width:78px;height:78px}
       .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -127,13 +130,15 @@
         backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
       }
       .stat-cell .k{font-size:13px;color:var(--sub)}
-      .stat-cell .v{font-size:24px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+      .stat-cell .v{font-size:22px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
+      /* odd trailing cell (detail page has 5) spans the full row instead of leaving a half gap */
+      .stat-grid>.stat-cell:last-child:nth-child(odd){grid-column:1/-1}
       .stat-cell .v small{font-size:13px;color:var(--sub);font-weight:600}
       /* bars */
-      .chart-wrap{position:relative;margin-top:14px}
+      .chart-wrap{position:relative;margin-top:10px}
       .chart-wrap .gl{position:absolute;left:0;right:36px;border-top:1px dashed rgba(255,255,255,.18);pointer-events:none}
       .chart-wrap .gl i{position:absolute;right:-38px;top:-8px;width:34px;font-style:normal;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
-      .bars{display:flex;align-items:flex-end;gap:2px;height:120px;position:relative;z-index:1}
+      .bars{display:flex;align-items:flex-end;gap:2px;height:96px;position:relative;z-index:1}
       .chart-wrap .bars{padding-right:36px}
       .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;background:none;border:0;padding:0;min-height:0}
       .bar{width:100%;max-width:22px;border-radius:5px;background:var(--bar-dim);min-height:2px;transition:background var(--dur-fast) var(--ease),transform var(--dur) var(--ease-spring);transform-origin:bottom}
@@ -141,9 +146,9 @@
       .bar-col:active{transform:scale(.96)}
       .bar-col.on .bar,.bar-col:active .bar{background:var(--bar)}
       .bar-col.sel .bar{background:#ffffff;box-shadow:0 0 14px rgba(255,255,255,.35)}
-      .axis{display:flex;gap:2px;margin-top:6px;justify-content:space-between}
+      .axis{display:flex;gap:2px;margin-top:4px;justify-content:space-between}
       .axis span{font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
-      .chart-note{font-size:14px;color:var(--sub);margin-top:12px;min-height:21px}
+      .chart-note{font-size:14px;color:var(--sub);margin-top:6px;min-height:21px}
       .chart-note b{color:var(--ink)}
       /* section heading + record cards */
       .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:24px 2px 12px}
@@ -161,7 +166,7 @@
       .rec-ic{width:44px;height:44px;border-radius:50%;background:rgba(77,178,255,.14);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;flex:none}
       .rec-ic svg{width:24px;height:24px}
       .rec-main{flex:1;min-width:0}
-      .rec-name{font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+      .rec-name{font-weight:700;font-size:16px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
       .rec-time{font-size:14px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .rec-dur{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
       .rec-vol{font-size:12px;color:var(--sub);text-align:right}
@@ -274,10 +279,11 @@
       .timer-pick select{flex:1}
       .timer-live{display:flex;justify-content:center;margin-bottom:4px}
       .dev-main{flex:1;min-width:0}
-      .dev-name{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      /* block-level so overflow/ellipsis actually clip: inline spans ignore both and long names spill past the card edge */
+      .dev-name{display:block;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .dev-total{font-size:22px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
       .dev-total small{font-size:13px;color:var(--sub);font-weight:600}
-      .dev-meta{font-size:13px;color:var(--sub)}
+      .dev-meta{display:block;font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .chev{color:var(--faint);flex:none}
       .chev svg{width:18px;height:18px}
       /* donut */
@@ -285,7 +291,8 @@
       .donut-legend{flex:1;font-size:14px}
       .donut-legend .row{display:flex;align-items:center;gap:8px;padding:3px 0;color:var(--sub)}
       .dot{width:10px;height:10px;border-radius:3px;flex:none}
-      .donut-legend .row b{color:var(--ink);margin-left:auto;font-variant-numeric:tabular-nums}
+      .donut-legend .lg-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .donut-legend .row b{color:var(--ink);margin-left:auto;font-variant-numeric:tabular-nums;flex:none}
       /* timer */
       .timer-face{font-size:44px;font-weight:800;letter-spacing:.01em;text-align:center;font-variant-numeric:tabular-nums;padding:8px 0 4px}
       .timer-state{text-align:center;color:var(--sub);font-size:14px;margin-bottom:10px}
@@ -303,12 +310,21 @@
       }
       input:focus,select:focus{outline:none;border-color:rgba(125,196,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 3px rgba(77,178,255,.18)}
       .form-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      /* Bottom dock behind the floating tab bar: a deep-blue fade that content scrolls
+         under, so page text never ghosts through the capsule — it dissolves into the
+         dock first, like a native tab bar's fade. Pure background alpha (no backdrop
+         filter), so the top edge is a smooth gradient in every engine. */
+      .tabdock{
+        position:fixed;left:0;right:0;bottom:0;z-index:39;pointer-events:none;
+        height:calc(112px + env(safe-area-inset-bottom));
+        background:linear-gradient(180deg, rgba(8,26,40,0) 0%, rgba(8,26,40,.52) 46%, rgba(7,22,34,.88) 78%, rgba(7,22,34,.95) 100%);
+      }
       /* floating pill tab bar */
       nav.tabbar{
         position:fixed;left:50%;transform:translateX(-50%);z-index:40;
         bottom:calc(12px + env(safe-area-inset-bottom));
         width:min(430px,calc(100vw - 40px));
-        background:linear-gradient(180deg,rgba(38,62,84,.62),rgba(13,28,42,.58));
+        background:linear-gradient(180deg,rgba(38,62,84,.80),rgba(13,28,42,.76));
         border:1px solid rgba(255,255,255,.22);border-radius:999px;
         backdrop-filter:blur(28px) saturate(190%) brightness(1.08);-webkit-backdrop-filter:blur(28px) saturate(190%) brightness(1.08);
         box-shadow:0 20px 44px rgba(0,6,14,.48), 0 4px 14px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.26), inset 0 0 0 1px rgba(255,255,255,.05);
@@ -346,11 +362,11 @@
       .steps{margin:10px 0 0;padding-left:20px;color:var(--ink)}
       .steps li{margin-bottom:9px}
       .steps b{color:var(--accent-ink)}
-      .empty{padding:26px 10px;text-align:center;color:var(--sub)}
+      .empty{padding:14px 10px;text-align:center;color:var(--sub)}
       .empty .t{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:5px}
-      .empty p{margin:0 0 14px;font-size:14px}
+      .empty p{margin:0 0 12px;font-size:14px}
       .banner{
-        display:flex;gap:12px;align-items:center;border-radius:26px;padding:15px 16px;margin-bottom:16px;position:relative;
+        display:flex;gap:12px;align-items:center;border-radius:26px;padding:12px 16px;margin-bottom:12px;position:relative;
         background:linear-gradient(155deg,rgba(96,186,255,.30),rgba(77,178,255,.12) 55%,rgba(77,178,255,.18));
         border:1px solid var(--glass-brd);box-shadow:var(--shadow);
         backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
@@ -402,6 +418,7 @@
     <div class="bg-orbs" aria-hidden="true"><i></i><i></i><i></i></div>
     <main class="wrap" id="view"></main>
 
+    <div class="tabdock" aria-hidden="true"></div>
     <nav class="tabbar" aria-label="主导航">
       <div class="tabbar-in">
         <button class="tab" data-tab="today" type="button">
@@ -641,13 +658,20 @@
         var volHtml = s.vol!=null
           ? '<div class="rec-vol'+(s.vol>=85?" loud":"")+'">'+esc(s.vol)+' dB</div>'
           : '<div class="rec-vol">— dB</div>';
-        var timeLine = sameDay(s.start, s.end)
-          ? fmtDateShort(s.start)+" "+fmtClock(s.start)+" – "+fmtClock(s.end)
-          : fmtDateShort(s.start)+" "+fmtClock(s.start)+" – "+fmtDateShort(s.end)+" "+fmtClock(s.end);
+        /* 第一行只放时间段：日期+起止时间全塞一行时，手机宽度下结束时间永远被省略号截掉。
+           日期挪到第二行和设备名一起，第一行保证完整显示。 */
+        var timeLine;
+        if(sameDay(s.start, s.end)){
+          timeLine = fmtClock(s.start)+" – "+fmtClock(s.end);
+        }else if(dayKey(s.end)===dayKey(s.start+86400000)){
+          timeLine = fmtClock(s.start)+" – 次日 "+fmtClock(s.end);
+        }else{
+          timeLine = fmtClock(s.start)+" – "+fmtDateShort(s.end)+" "+fmtClock(s.end);
+        }
         return '<div class="rec-card">'
           + '<div class="rec-ic">'+ICON_DEV+'</div>'
           + '<div class="rec-main"><div class="rec-name">'+timeLine+'</div>'
-          + '<div class="rec-time">'+esc(d?d.name:"已删除的耳机")+'</div></div>'
+          + '<div class="rec-time">'+fmtDateShort(s.start)+" · "+esc(d?d.name:"已删除的耳机")+'</div></div>'
           + '<div><div class="rec-dur">'+fmtDurHM(durMin(s))+'</div>'+volHtml+'</div>'
           + (showDelete? '<button class="icon-btn" type="button" data-del="'+s.id+'" aria-label="删除这条记录">'+ICON_TRASH+'</button>' : '')
           + '</div>';
@@ -1011,7 +1035,7 @@
           + '<div class="date-line">'+(st.first? "首次使用 "+fmtDate(st.first) : "还没有使用记录")+'</div>';
 
         var him=deviceImg(d.name);
-        html+='<div class="card"><div style="font-size:18px;font-weight:700">'+esc(d.name)+'</div>'
+        html+='<div class="card">'
           + '<div class="hero-stage" id="hero-stage"><div class="hero-enter"><div class="hero-float"><div class="hero-tilt">'
           + '<img '+(him.cover?'class="cover" ':'')+'src="'+him.src+'" alt="'+esc(d.name)+'" draggable="false" />'
           + '<span class="hero-sheen" style="-webkit-mask-image:url('+him.src+');mask-image:url('+him.src+')" aria-hidden="true"></span>'
@@ -1029,11 +1053,11 @@
         if(S.devices.length>1 && allSum.total>0){
           var C=2*Math.PI*34;
           var others=S.devices.filter(function(x){ return x.id!==detailId; });
-          var legend='<div class="row"><span class="dot" style="background:'+PALETTE[0]+'"></span>'+esc(d.name)+'<b>'+Math.round(share*100)+'%</b></div>';
+          var legend='<div class="row"><span class="dot" style="background:'+PALETTE[0]+'"></span><span class="lg-name">'+esc(d.name)+'</span><b>'+Math.round(share*100)+'%</b></div>';
           others.forEach(function(o,i){
             var os=deviceStats(o.id).sum;
             var pct=allSum.total>0? Math.round(os.total/allSum.total*100):0;
-            legend+='<div class="row"><span class="dot" style="background:'+PALETTE[(i+1)%PALETTE.length]+'"></span>'+esc(o.name)+'<b>'+pct+'%</b></div>';
+            legend+='<div class="row"><span class="dot" style="background:'+PALETTE[(i+1)%PALETTE.length]+'"></span><span class="lg-name">'+esc(o.name)+'</span><b>'+pct+'%</b></div>';
           });
           html+='<div class="card"><h2>占全部聆听的比例</h2><div class="donut-wrap">'
             + '<svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true">'
@@ -1107,15 +1131,24 @@
         });
         viewEl.querySelectorAll("[data-hour]").forEach(function(b){
           b.addEventListener("click", function(){
+            /* 就地更新选中态和说明文字，不整页重渲：重渲会跳回顶部并重播所有入场动画，点柱子时很晃 */
             selHour=parseInt(b.getAttribute("data-hour"),10);
-            render();
+            var now=Date.now();
+            var dist=hourDist(S.sessions.filter(function(s){ return sameDay(s.start, now) || sameDay(s.end-1, now); }));
+            var note=document.getElementById("hour-note");
+            if(note) note.innerHTML=selHour+' 点 – '+(selHour+1)+' 点：聆听 <b>'+fmtDurHM(dist[selHour])+'</b>';
+            viewEl.querySelectorAll("[data-hour]").forEach(function(x){ x.classList.remove("sel"); });
+            b.classList.add("sel");
           });
         });
         viewEl.querySelectorAll("[data-del]").forEach(function(b){
           b.addEventListener("click", function(){
             var id=b.getAttribute("data-del");
             S.sessions=S.sessions.filter(function(s){ return s.id!==id; });
-            save(); toast("已删除这条记录"); render();
+            save(); toast("已删除这条记录");
+            var y=window.scrollY||0;
+            render();
+            window.scrollTo(0,y);
           });
         });
         var tsel=document.getElementById("timer-device");
