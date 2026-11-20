@@ -279,6 +279,13 @@
       .use-dur small{font-size:12px;font-weight:550;color:var(--sub)}
       .use-bar{height:4px;border-radius:99px;background:rgba(255,255,255,.07);margin-top:7px;overflow:hidden}
       .use-bar i{display:block;height:100%;border-radius:99px;background:var(--bar);transform-origin:left;animation:barGrow 700ms var(--ease) both;animation-delay:var(--d,120ms)}
+      /* overview rows are buttons now (merged 我的耳机 list): reset the
+         button chrome, keep the row's hairline top border and flex layout */
+      .use-row-btn{width:100%;background:none;border:0;border-top:1px solid var(--line);font:inherit;color:inherit;text-align:left;cursor:pointer;align-items:center;transition:background var(--dur-fast) var(--ease)}
+      .use-row-btn:active{background:rgba(255,255,255,.035)}
+      .use-row-btn .use-rank{padding-top:0}
+      .use-meta{font-size:12.5px;color:var(--sub);margin-top:3px;font-variant-numeric:tabular-nums}
+      .use-spec{font-size:12px;color:var(--faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       @keyframes barGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
       /* timer device picker */
       .timer-pick{display:flex;gap:12px;align-items:center}
@@ -1017,9 +1024,6 @@
       function renderToday(){
         var now=Date.now();
         var todayList=S.sessions.filter(function(s){ return sameDay(s.start, now) || sameDay(s.end-1, now); });
-        var sum=summarize(todayList);
-        var dist=hourDist(todayList);
-        var maxH=Math.max.apply(null, dist.concat([1]));
         var d=new Date();
         var weekNames=["周日","周一","周二","周三","周四","周五","周六"];
 
@@ -1040,36 +1044,10 @@
             + '<button class="btn" type="button" data-open="sheet-device">添加耳机</button>');
         }
 
-        /* 主卡：渐变圆环做主视觉，圆环填充 = 今日时长占单日最长记录的比例（真实数据） */
-        var dayTotals={};
-        S.sessions.forEach(function(s){ var k=dayKey(s.start); dayTotals[k]=(dayTotals[k]||0)+durMin(s); });
-        var bestDay=0;
-        Object.keys(dayTotals).forEach(function(k){ if(dayTotals[k]>bestDay) bestDay=dayTotals[k]; });
-        var dayRatio= bestDay>0? Math.min(1, sum.total/bestDay) : 0;
-        /* 今日卡先攒在 todayHtml 里：先出「耳机总览 + 我的耳机」，
-           今日卡等设备列表拼完再组装，导入完第一眼看到的是全部情况 */
-        var todayHtml='<div class="card hero-card">'
-          + gradRing(dayRatio, '<div class="ring-big">'+fmtBigHM(sum.total)+'</div><div class="ring-cap">今日时长</div>')
-          + '<div class="hero-title">今日聆听时长</div>'
-          + '<div class="hero-sub">共佩戴 '+sum.count+' 次 · 最长一次 '+fmtDurHM(sum.longest)+'</div>'
-          + (bestDay>0 && sum.total>0? '<div class="hero-sub">达到单日最长记录（'+fmtDurHM(bestDay)+'）的 '+Math.round(dayRatio*100)+'%</div>' : '')
-          + '</div>'
-          + '<div class="card"><div class="hero-label">'+ICON_DEV+'时段分布</div>'
-          + '<div class="chart-wrap">'
-          + '<div class="gl" style="bottom:100%"><i>'+fmtAxisMin(maxH)+'</i></div>'
-          + '<div class="gl" style="bottom:50%"><i>'+fmtAxisMin(maxH/2)+'</i></div>'
-          + '<div class="gl" style="bottom:0"><i>0m</i></div>'
-          + '<div class="bars" role="group" aria-label="时段分布">';
-        for(var h=0;h<24;h++){
-          var pct=Math.max(2, dist[h]/maxH*100);
-          todayHtml+='<button class="bar-col'+(selHour===h?" sel":(dist[h]>0?" on":""))+'" type="button" data-hour="'+h+'" aria-label="'+h+'点，聆听'+fmtDur(dist[h])+'"><span class="bar" style="height:'+pct+'%"></span></button>';
-        }
-        todayHtml+='</div></div><div class="axis" style="padding-right:36px"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>';
-        todayHtml+='<div class="chart-note" id="hour-note">'
-          + (selHour!=null
-              ? selHour+' 点 – '+(selHour+1)+' 点：聆听 <b>'+fmtDurHM(dist[selHour])+'</b>'
-              : '轻点柱形，查看那个小时听了多久')
-          + '</div></div>';
+        /* 今日时长功能已去掉（eric 定）：主页只看耳机使用情况——主图、
+           耳机总览和每副耳机的累计，不再单独出一张今日圆环卡和今日时段分布，
+           导入前（还没有任何记录时）也不会先摆一个 0 分钟的今日卡。
+           按天/按时段的细看在统计页和设备详情页里照常有，数据没动。 */
 
         /* 计时只是辅助：数据主要来自健康导入。运行中贴一条小条在主卡下面，
            没在计时就只在页尾留一个小入口，不占主页的位置。 */
@@ -1142,61 +1120,61 @@
           }
         }
 
-        /* 耳机总览：导入完第一屏就直观看到的全部情况（PodHours 式首屏）——
-           累计大字 + 每副耳机的产品图、时长和占比条，不用滚动、不用点进详情；
-           今日卡（todayHtml）排在总览和「我的耳机」之后，不抢首屏的位置 */
-        if(S.sessions.length){
+        /* 耳机总览：「我的耳机」已并进这一张卡（eric 定，不要两块分开的内容）——
+           顶部是全部耳机的累计总账，下面直接是每副耳机的列表：产品图、累计
+           时长、占比条、天数/次数/最近使用、型号代码，一行就是一副耳机，
+           点任意一行照常进详情页。添加耳机和识别说明也收进卡片底部。 */
+        if(S.sessions.length || S.devices.length){
           var allSum=summarize(S.sessions);
           var allDaySet={}; S.sessions.forEach(function(s){ allDaySet[dayKey(s.start)]=1; });
-          var firstTs=S.sessions[0].start; S.sessions.forEach(function(s){ if(s.start<firstTs) firstTs=s.start; });
-          var byDevAll={};
-          S.sessions.forEach(function(s){ byDevAll[s.device]=(byDevAll[s.device]||0)+durMin(s); });
-          var shareRows=Object.keys(byDevAll).map(function(id){
-            var dv=deviceById(id);
-            return { name: dv? dv.name : "已删除的耳机", dev: dv, total: byDevAll[id] };
-          }).filter(function(x){ return x.total>0; })
-            .sort(function(a,b){ return b.total-a.total; });
-          html+='<div class="card"><div class="hero-label">'+ICON_DEV+'耳机总览</div>'
-            + '<div class="hero-sub">自 '+fmtDate(firstTs)+' 以来 · 共 '+S.devices.length+' 副耳机</div>'
-            + '<div class="big-num">'+fmtBigHM(allSum.total)+'</div>'
-            + '<div class="hero-sub">累计聆听时长 · '+allSum.count+' 次 · '+Object.keys(allDaySet).length+' 天'
-            + (allSum.avgVol!=null? ' · 平均 '+allSum.avgVol+' dB':'')+'</div>';
-          shareRows.forEach(function(u,i){
-            var pct= allSum.total>0? u.total/allSum.total*100 : 0;
-            html+='<div class="use-row"><div class="use-rank">'+(i+1)+'</div>'
-              + devThumb(u.dev||u.name, "sm")
-              + '<div class="use-main"><div class="use-top"><span class="use-name">'+esc(u.name)+tailSpanHtml(u.dev)+'</span>'
-              + '<span class="use-pct">'+(Math.round(pct*10)/10)+'%</span></div>'
-              + '<div class="use-dur">'+fmtBigHM(u.total)+'</div>'
-              + '<div class="use-bar"><i style="width:'+Math.max(2,pct).toFixed(1)+'%"></i></div></div></div>';
+          var firstTs=null;
+          S.sessions.forEach(function(s){ if(firstTs==null || s.start<firstTs) firstTs=s.start; });
+          var devRows=S.devices.map(function(dv){
+            var st=deviceStats(dv.id);
+            return { dev:dv, name:dv.name, total:st.sum.total, st:st };
+          }).sort(function(a,b){ return b.total-a.total; });
+          /* 已删除耳机名下的历史记录：没有详情可进，只出一行总账，不丢数 */
+          var orphanTotal=0, orphanCount=0;
+          S.sessions.forEach(function(s){
+            if(!deviceById(s.device)){ orphanTotal+=durMin(s); orphanCount++; }
           });
-          html+='<p class="note" style="margin-bottom:0">下面就是每副耳机的卡片，点开看详情；按周、按月细看在底部「统计」页。</p></div>';
-        }
-
-        /* 我的耳机（原设备页的主体）：每副耳机的累计使用情况，点开看详情 */
-        if(S.devices.length){
-          html+='<div class="sec-head"><h2>我的耳机</h2><span>共 '+S.devices.length+' 副 · 点开看详情</span></div>';
-          var order=S.devices.map(function(dv){ return { d:dv, st:deviceStats(dv.id) }; })
-            .sort(function(a,b){ return b.st.sum.total-a.st.sum.total; });
-          order.forEach(function(o){
-            html+='<button class="dev-card" type="button" data-dev="'+o.d.id+'">'
-              + devThumb(o.d)
-              + '<span class="dev-main"><span class="dev-name">'+esc(o.d.name)+'</span>'
-              + '<span class="dev-total" style="display:block">'+fmtDurHM(o.st.sum.total)+'</span>'
-              + '<span class="dev-meta">'+o.st.days+' 天 · '+o.st.sum.count+' 次'
-              + (o.st.last? ' · 最近 '+fmtDateShort(o.st.last):'')
-              + '</span>'
-              + (devSpec(o.d)? '<span class="dev-sub">'+esc(devSpec(o.d))+'</span>' : '')
+          html+='<div class="card"><div class="hero-label">'+ICON_DEV+'耳机总览</div>'
+            + '<div class="hero-sub">'
+            + (firstTs!=null? '自 '+fmtDate(firstTs)+' 以来 · ' : '')
+            + '共 '+S.devices.length+' 副耳机 · 点一副看详情</div>';
+          if(S.sessions.length){
+            html+='<div class="big-num">'+fmtBigHM(allSum.total)+'</div>'
+              + '<div class="hero-sub">累计聆听时长 · '+allSum.count+' 次 · '+Object.keys(allDaySet).length+' 天'
+              + (allSum.avgVol!=null? ' · 平均 '+allSum.avgVol+' dB':'')+'</div>';
+          }
+          devRows.forEach(function(u,i){
+            var pct= allSum.total>0? u.total/allSum.total*100 : 0;
+            html+='<button class="use-row use-row-btn" type="button" data-dev="'+u.dev.id+'">'
+              + '<span class="use-rank">'+(i+1)+'</span>'
+              + devThumb(u.dev, "sm")
+              + '<span class="use-main"><span class="use-top"><span class="use-name">'+esc(u.name)+tailSpanHtml(u.dev)+'</span>'
+              + '<span class="use-pct">'+(Math.round(pct*10)/10)+'%</span></span>'
+              + '<span class="use-dur" style="display:block">'+fmtBigHM(u.total)+'</span>'
+              + '<span class="use-bar"><i style="width:'+Math.max(2,pct).toFixed(1)+'%"></i></span>'
+              + '<span class="use-meta" style="display:block">'+u.st.days+' 天 · '+u.st.sum.count+' 次'
+              + (u.st.last? ' · 最近使用 '+fmtDateShort(u.st.last) : ' · 还没有记录')+'</span>'
+              + (devSpec(u.dev)? '<span class="use-spec" style="display:block">'+esc(devSpec(u.dev))+'</span>' : '')
               + '</span>'
               + '<span class="chev">'+ICON_CHEV+'</span></button>';
           });
-          html+='<button class="btn block" type="button" data-open="sheet-device">＋ 添加耳机</button>';
-          html+='<div class="card" style="margin-top:14px"><h2>设备是怎么识别的</h2>'
-            + '<p class="note" style="margin:0">按健康导出里每副耳机自带的<b style="color:var(--sub)">蓝牙型号代码</b>认款式——比如 0x2014 是 AirPods Pro 第二代、0x200E 是第一代、0x2002 是 AirPods 第一代，蓝牙名字都叫「AirPods Pro」时也能分开。再按<b style="color:var(--sub)">蓝牙标识</b>区分同一款式的不同耳机：同型号的两副耳机标识不同，单独统计、不合并。型号代码对不上已知款式时，名字后面会带上原始代码。</p></div>';
+          if(orphanTotal>0){
+            var opct= allSum.total>0? orphanTotal/allSum.total*100 : 0;
+            html+='<div class="use-row"><div class="use-rank">·</div>'
+              + devThumb("已删除的耳机", "sm")
+              + '<div class="use-main"><div class="use-top"><span class="use-name">已删除的耳机</span>'
+              + '<span class="use-pct">'+(Math.round(opct*10)/10)+'%</span></div>'
+              + '<div class="use-dur">'+fmtBigHM(orphanTotal)+'</div>'
+              + '<div class="use-bar"><i style="width:'+Math.max(2,opct).toFixed(1)+'%"></i></div>'
+              + '<div class="use-meta">'+orphanCount+' 次 · 耳机已删除，只保留总账</div></div></div>';
+          }
+          html+='<button class="btn block" type="button" data-open="sheet-device" style="margin-top:16px">＋ 添加耳机</button>'
+            + '<p class="note" style="margin-bottom:0">设备按健康导出里的<b style="color:var(--sub)">蓝牙型号代码</b>认款式——比如 0x2014 是 AirPods Pro 第二代、0x200E 是第一代、0x2002 是 AirPods 第一代，蓝牙名字都叫「AirPods Pro」时也能分开；再按<b style="color:var(--sub)">蓝牙标识</b>区分同一款式的不同耳机，单独统计、不合并。按周、按月细看在底部「统计」页。</p></div>';
         }
-
-        /* 今日卡排在总览和耳机列表之后组装：先看全部情况，再看今天 */
-        html+=todayHtml;
 
         /* 计时中：小条贴在耳机列表后面，不抢总览和设备卡的位置 */
         if(S.timer) html+=timerHtml;
@@ -1216,8 +1194,10 @@
         /* 没在计时：计时入口压到页尾，只占一行小卡 */
         if(!S.timer) html+=timerHtml;
 
-        /* 数据管理（原设备页底部，一并搬到主页） */
-        html+='<div class="card" style="margin-top:14px"><h2>数据管理</h2>'
+        /* 数据管理（原设备页底部，一并搬到主页）。margin-top 放大：空状态下
+           页面不长，这张卡的第一排按钮原本正好落在浮动底栏的高度上被盖住，
+           多留一段间隔让它首屏时完整露在底栏下方，滚动到底也有底部留白托住 */
+        html+='<div class="card" style="margin-top:76px"><h2>数据管理</h2>'
           + '<div class="btn-row">'
           + '<button class="btn" type="button" data-open="sheet-import">导入健康数据</button>'
           + '<button class="btn" type="button" id="btn-export">导出备份</button></div>'
