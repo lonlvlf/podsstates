@@ -90,7 +90,10 @@
       @keyframes orbDrift{from{transform:translate3d(0,0,0) scale(1);opacity:.85}to{transform:translate3d(26px,34px,0) scale(1.08);opacity:1}}
       button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]){min-height:2.25rem}
       button{font:inherit;cursor:pointer}
-      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:12px 18px calc(118px + env(safe-area-inset-bottom))}
+      /* bottom padding must clear the floating tab bar (bar ≈72px tall, 12px above
+         the viewport edge, plus the safe-area inset) with room to spare, so the
+         last card on any page can always scroll fully above it */
+      .wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:12px 18px calc(140px + env(safe-area-inset-bottom))}
       h1{font-size:32px;font-weight:800;letter-spacing:-.01em;margin:0 0 2px}
       .date-line{color:var(--sub);font-size:15px;margin-bottom:12px;font-variant-numeric:tabular-nums}
       h2{font-size:19px;font-weight:700;margin:0}
@@ -326,6 +329,16 @@
       /* date/time fields carry a long localized string (2026年11月20日): never let
          the control itself exceed its container, whatever the engine's intrinsic size */
       input[type="date"],input[type="time"]{min-width:0;max-width:100%;padding-left:8px;padding-right:8px;font-size:14px}
+      /* Stats custom-range card: label and field share one row (开始日期 [框]).
+         The date input's intrinsic minimum (~180px) fits easily in the remaining
+         ~230px of a phone-width row, so the pair can never overlap — and at two
+         compact rows the card stays close to the old side-by-side height instead
+         of the tall stacked version. */
+      .range-card{padding:16px 18px}
+      .date-row{display:flex;align-items:center;gap:12px}
+      .date-row+.date-row{margin-top:10px}
+      .date-row label.f{margin:0;flex:none;width:60px;font-size:14px}
+      .date-row input{flex:1;min-width:0}
       /* Bottom dock behind the floating tab bar: a deep-blue fade that content scrolls
          under, so page text never ghosts through the capsule — it dissolves into the
          dock first, like a native tab bar's fade. Pure background alpha (no backdrop
@@ -805,9 +818,9 @@
           + '<button type="button" data-range="custom" class="'+(rangeMode==="custom"?"on":"")+'">自选</button></div>';
 
         if(rangeMode==="custom"){
-          html+='<div class="card"><div class="form-2"><div>'
-            + '<label class="f" for="cf">开始日期</label><input type="date" id="cf" value="'+esc(customFrom)+'" /></div><div>'
-            + '<label class="f" for="ct">结束日期</label><input type="date" id="ct" value="'+esc(customTo)+'" /></div></div></div>';
+          html+='<div class="card range-card">'
+            + '<div class="date-row"><label class="f" for="cf">开始日期</label><input type="date" id="cf" value="'+esc(customFrom)+'" /></div>'
+            + '<div class="date-row"><label class="f" for="ct">结束日期</label><input type="date" id="ct" value="'+esc(customTo)+'" /></div></div>';
         }
 
         if(!r.list.length){
