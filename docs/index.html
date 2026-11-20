@@ -160,10 +160,44 @@
       .dev-thumb.sm{width:46px;height:46px;border-radius:13px}
       .dev-thumb.sm img{padding:4px}
       .dev-thumb.lg{width:64px;height:64px;border-radius:18px}
-      .hero-stage{display:flex;justify-content:center;padding:20px 0 10px;position:relative}
+      .hero-stage{display:flex;justify-content:center;padding:20px 0 16px;position:relative;perspective:900px;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+      .hero-stage:active{cursor:grabbing}
       .hero-stage::before{content:"";position:absolute;inset:0;background:radial-gradient(55% 62% at 50% 46%, rgba(96,178,230,.26), rgba(96,178,230,0) 70%);pointer-events:none}
-      .hero-stage img{width:min(228px,62vw);max-height:228px;object-fit:contain;position:relative;filter:drop-shadow(0 18px 24px rgba(0,0,0,.45))}
+      .hero-stage img{width:min(228px,62vw);max-height:228px;object-fit:contain;position:relative;display:block;filter:drop-shadow(0 18px 24px rgba(0,0,0,.45))}
       .hero-stage img.cover{height:min(228px,62vw);object-fit:cover;border-radius:22px;border:1px solid rgba(255,255,255,.14);filter:none}
+      /* 详情大图动画（苹果官网式：克制、顺滑，只动 transform / opacity） */
+      .hero-enter{animation:heroIn .85s cubic-bezier(.22,1,.36,1) both;position:relative;z-index:1}
+      @keyframes heroIn{from{opacity:0;transform:translateY(16px) scale(.93)}to{opacity:1;transform:translateY(0) scale(1)}}
+      .hero-float{animation:heroFloat 5.6s ease-in-out infinite alternate;will-change:transform}
+      @keyframes heroFloat{from{transform:translateY(5px)}to{transform:translateY(-6px)}}
+      .hero-tilt{position:relative;transform:rotateX(var(--hrx,0deg)) rotateY(var(--hry,0deg));will-change:transform}
+      .hero-tilt.spring{transition:transform .9s cubic-bezier(.3,1.5,.45,1)}
+      .hero-tilt.smooth{transition:transform .45s ease-out}
+      .hero-shadow{
+        position:absolute;left:50%;bottom:4px;width:52%;height:24px;z-index:0;pointer-events:none;
+        background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.55), rgba(0,0,0,0) 70%);
+        transform:translateX(-50%) scaleX(1.05);opacity:.7;
+        animation:heroShadow 5.6s ease-in-out infinite alternate;will-change:transform,opacity;
+      }
+      @keyframes heroShadow{from{transform:translateX(-50%) scaleX(1.05);opacity:.72}to{transform:translateX(-50%) scaleX(.85);opacity:.48}}
+      .hero-sheen{
+        position:absolute;inset:0;overflow:hidden;border-radius:22px;pointer-events:none;
+        -webkit-mask-size:contain;mask-size:contain;
+        -webkit-mask-position:center;mask-position:center;
+        -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+      }
+      .hero-sheen::before{
+        content:"";position:absolute;top:-25%;bottom:-25%;left:0;width:45%;
+        background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.34) 50%,rgba(255,255,255,0) 100%);
+        transform:translateX(-240%) skewX(-12deg);
+        animation:heroSheen 1.5s cubic-bezier(.4,0,.2,1) .55s both;will-change:transform;
+      }
+      @keyframes heroSheen{from{transform:translateX(-240%) skewX(-12deg)}to{transform:translateX(360%) skewX(-12deg)}}
+      @media (prefers-reduced-motion: reduce){
+        .hero-enter,.hero-float,.hero-shadow,.hero-sheen::before{animation:none}
+        .hero-sheen{display:none}
+        .hero-tilt{transform:none;transition:none}
+      }
       /* stats: per-device usage rows */
       .use-row{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-top:1px solid var(--line)}
       .use-rank{width:16px;flex:none;font-weight:800;color:var(--accent-ink);font-variant-numeric:tabular-nums;padding-top:13px;text-align:center}
@@ -809,6 +843,66 @@
         });
       }
 
+      /* ---------- 详情大图动画交互（视差倾斜 / 弹簧回正 / 手机倾斜） ---------- */
+      var heroTiltEl=null, heroLastPointer=0;
+      function reducedMotion(){
+        return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      }
+      function bindHero(){
+        var stage=document.getElementById("hero-stage");
+        if(!stage) return;
+        var tilt=stage.querySelector(".hero-tilt");
+        if(!tilt) return;
+        heroTiltEl=tilt;
+        if(reducedMotion()) return;
+        var dragging=false;
+        function setTilt(rx, ry){
+          tilt.style.setProperty("--hrx", rx.toFixed(2)+"deg");
+          tilt.style.setProperty("--hry", ry.toFixed(2)+"deg");
+        }
+        function springBack(){
+          heroLastPointer=Date.now();
+          tilt.classList.remove("smooth");
+          tilt.classList.add("spring");
+          setTilt(0,0);
+        }
+        stage.addEventListener("pointerdown", function(e){
+          dragging=true; heroLastPointer=Date.now();
+          tilt.classList.remove("spring","smooth");
+          try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+        });
+        stage.addEventListener("pointermove", function(e){
+          if(e.pointerType==="touch" && !dragging) return;
+          heroLastPointer=Date.now();
+          var r=stage.getBoundingClientRect();
+          if(!r.width || !r.height) return;
+          var x=(e.clientX-r.left)/r.width*2-1;
+          var y=(e.clientY-r.top)/r.height*2-1;
+          x=Math.max(-1,Math.min(1,x)); y=Math.max(-1,Math.min(1,y));
+          setTilt(-y*6, x*7);
+        });
+        stage.addEventListener("pointerup", function(){ dragging=false; springBack(); });
+        stage.addEventListener("pointercancel", function(){ dragging=false; springBack(); });
+        stage.addEventListener("pointerleave", function(e){
+          if(e.pointerType!=="touch"){ dragging=false; springBack(); }
+        });
+      }
+      /* 手机倾斜视差：只被动监听，不主动申请权限（iOS 未授权时不会触发，图保持静态倾斜角）；
+         指针刚操作过时让位给指针，2.5 秒后再接管。 */
+      if(window.DeviceOrientationEvent && !reducedMotion()){
+        window.addEventListener("deviceorientation", function(e){
+          if(!heroTiltEl || !document.contains(heroTiltEl)) return;
+          if(Date.now()-heroLastPointer<2500) return;
+          if(e.gamma==null || e.beta==null) return;
+          var ry=Math.max(-6,Math.min(6, e.gamma/4));
+          var rx=Math.max(-6,Math.min(6, -(e.beta-42)/4));
+          heroTiltEl.classList.remove("spring");
+          heroTiltEl.classList.add("smooth");
+          heroTiltEl.style.setProperty("--hrx", rx.toFixed(2)+"deg");
+          heroTiltEl.style.setProperty("--hry", ry.toFixed(2)+"deg");
+        });
+      }
+
       /* ---------- 设备详情 ---------- */
       function renderDetail(){
         var d=deviceById(detailId);
@@ -823,7 +917,10 @@
 
         var him=deviceImg(d.name);
         html+='<div class="card"><div style="font-size:18px;font-weight:700">'+esc(d.name)+'</div>'
-          + '<div class="hero-stage"><img '+(him.cover?'class="cover" ':'')+'src="'+him.src+'" alt="'+esc(d.name)+'" /></div>'
+          + '<div class="hero-stage" id="hero-stage"><div class="hero-enter"><div class="hero-float"><div class="hero-tilt">'
+          + '<img '+(him.cover?'class="cover" ':'')+'src="'+him.src+'" alt="'+esc(d.name)+'" draggable="false" />'
+          + '<span class="hero-sheen" style="-webkit-mask-image:url('+him.src+');mask-image:url('+him.src+')" aria-hidden="true"></span>'
+          + '</div></div></div><div class="hero-shadow" aria-hidden="true"></div></div>'
           + '<div class="big-num">'+fmtBigHM(st.sum.total)+'</div>'
           + '<div class="hero-sub">'+(allSum.total>0? Math.round(share*100)+'% · 占全部聆听时长的比例' : '累计聆听时长')+'</div></div>'
           + '<div class="stat-grid" style="margin-bottom:16px">'
@@ -863,6 +960,7 @@
 
         viewEl.innerHTML=html;
         bindCommon();
+        bindHero();
         document.getElementById("btn-back").addEventListener("click", function(){ detailId=null; render(); });
         document.getElementById("btn-deldev").addEventListener("click", function(){
           var b=this;
