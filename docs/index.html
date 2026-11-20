@@ -45,19 +45,14 @@
       }
       *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
       html,body{margin:0;padding:0}
+      /* Base color matches the backdrop's deep blue so overscroll, rubber-banding
+         and window resizing never flash black at any edge. */
+      html{background-color:#0a2436}
       body{
         color:var(--ink);
         font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
-        font-size:16px;line-height:1.5;min-height:100vh;
-        /* Richer backdrop so the glass has something to refract: two cool glows,
-           a warm counter-glow low on the page, then the deep blue base. */
-        background:
-          radial-gradient(90% 52% at 88% -6%, rgba(86,182,224,.46), rgba(86,182,224,0) 62%),
-          radial-gradient(78% 46% at -12% 6%, rgba(46,128,178,.38), rgba(46,128,178,0) 58%),
-          radial-gradient(70% 42% at 108% 62%, rgba(38,92,148,.26), rgba(38,92,148,0) 62%),
-          radial-gradient(62% 36% at 8% 88%, rgba(22,74,112,.30), rgba(22,74,112,0) 60%),
-          linear-gradient(180deg,#144766 0%, #0c2b42 30%, #071c2e 58%, #030e1a 100%);
-        background-attachment:fixed;
+        font-size:16px;line-height:1.5;min-height:100vh;min-height:100dvh;
+        background-color:#0a2436;
       }
       body::before{
         content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
@@ -72,7 +67,19 @@
         background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
         opacity:.05;mix-blend-mode:overlay;
       }
-      .bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+      /* Full-viewport backdrop layer: fixed + inset:0 + 100vw/100dvh so the gradient
+         always covers the whole window at any size — phone, desktop, stretched or
+         zoomed — independent of how tall the content gets. No black edges. */
+      .bg-orbs{
+        position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;z-index:0;pointer-events:none;overflow:hidden;
+        background:
+          radial-gradient(90% 52% at 88% -6%, rgba(86,182,224,.46), rgba(86,182,224,0) 62%),
+          radial-gradient(78% 46% at -12% 6%, rgba(46,128,178,.38), rgba(46,128,178,0) 58%),
+          radial-gradient(70% 42% at 108% 62%, rgba(38,92,148,.26), rgba(38,92,148,0) 62%),
+          radial-gradient(62% 36% at 8% 88%, rgba(22,74,112,.30), rgba(22,74,112,0) 60%),
+          linear-gradient(180deg,#144766 0%, #0c2b42 30%, #071c2e 58%, #0a2436 100%);
+        background-color:#0a2436;
+      }
       .bg-orbs i{position:absolute;border-radius:50%;filter:blur(46px);will-change:transform,opacity}
       .bg-orbs i:nth-child(1){width:340px;height:340px;left:-90px;top:-70px;background:rgba(84,178,232,.34);animation:orbDrift 22s ease-in-out infinite alternate}
       .bg-orbs i:nth-child(2){width:280px;height:280px;right:-80px;top:34%;background:rgba(52,118,186,.26);animation:orbDrift 26s ease-in-out infinite alternate-reverse}
