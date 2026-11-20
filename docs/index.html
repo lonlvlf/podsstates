@@ -15,7 +15,7 @@
          见 CSS 里 .wrap 上方的注释。 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Pods Stats" />
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=32","background_color":"%230d1626","theme_color":"%230d1626"}' />
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=33","background_color":"%230d1626","theme_color":"%230d1626"}' />
     <!-- 主屏幕 App 会把旧页面缓存得很死：明确要求不缓存，让布局修正能真正下发到已添加的图标 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -36,7 +36,7 @@
           (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
         if(!standalone) return;
         document.documentElement.classList.add("ios-standalone");
-        var BUILD_V = "32";
+        var BUILD_V = "33";
         try{
           var u = new URL(window.location.href);
           if(u.searchParams.get("v") !== BUILD_V){
@@ -362,6 +362,35 @@
       .feat-wide .feat-img.cover img{height:196px;max-width:100%}
       .feat-wide .feat-name{font-size:18px;margin-top:14px}
       .feat-wide .feat-dur{font-size:26px}
+      /* ——— 主图卡动效：学 iOS 上 AirPods 连上手机弹出的连接弹窗——
+         卡片带弹簧感浮现落定，产品图随后轻轻放大到位并持续悬浮，
+         地面阴影跟着呼吸，文字依次浮现；切换「当前在用 / 使用最长」
+         时旧卡先沉下去淡出、新卡再弹簧浮现（JS 加 .feat-leaving /
+         .feat-swap）。全程只动 transform / opacity，不触发重排。 ——— */
+      .feat-pop{animation:featPop 640ms var(--ease-spring) backwards;will-change:transform,opacity}
+      @keyframes featPop{0%{opacity:0;transform:translateY(30px) scale(.93)}55%{opacity:1;transform:translateY(-4px) scale(1.006)}78%{transform:translateY(1px) scale(.999)}100%{opacity:1;transform:translateY(0) scale(1)}}
+      .feat-swap{animation:featSwap 540ms var(--ease-spring) backwards;will-change:transform,opacity}
+      @keyframes featSwap{0%{opacity:0;transform:translateY(16px) scale(.955)}58%{opacity:1;transform:translateY(-3px) scale(1.004)}100%{opacity:1;transform:translateY(0) scale(1)}}
+      .feat-leaving{transition:transform 170ms ease-in,opacity 170ms ease-in!important;transform:translateY(10px) scale(.965)!important;opacity:0}
+      .feat-img{position:relative}
+      .feat-img::before{content:"";position:absolute;inset:4% 10%;background:radial-gradient(55% 62% at 50% 46%, rgba(150,175,215,.13), rgba(150,175,215,0) 70%);opacity:.5;animation:featGlow 5.2s ease-in-out .7s infinite alternate;will-change:opacity}
+      @keyframes featGlow{from{opacity:.42}to{opacity:.85}}
+      .feat-float{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;animation:featFloat 5.2s ease-in-out .7s infinite alternate;will-change:transform}
+      @keyframes featFloat{from{transform:translateY(4px)}to{transform:translateY(-6px)}}
+      .feat-img.cover .feat-float{width:100%;height:100%}
+      .feat-pop .feat-img,.feat-swap .feat-img{animation:featImgIn 680ms var(--ease-spring) both}
+      @keyframes featImgIn{0%{opacity:0;transform:translateY(16px) scale(.9)}55%{opacity:1;transform:translateY(-3px) scale(1.012)}100%{opacity:1;transform:translateY(0) scale(1)}}
+      .feat-shadow{position:absolute;left:50%;bottom:2px;width:54%;height:22px;z-index:0;pointer-events:none;background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.48), rgba(0,0,0,0) 70%);transform:translateX(-50%) scaleX(1.04);opacity:.65;animation:featShadow 5.2s ease-in-out .7s infinite alternate;will-change:transform,opacity}
+      @keyframes featShadow{from{transform:translateX(-50%) scaleX(1.04);opacity:.65}to{transform:translateX(-50%) scaleX(.84);opacity:.42}}
+      .feat-img.cover .feat-shadow{display:none}
+      .feat-sheen{position:absolute;inset:0;overflow:hidden;pointer-events:none;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+      .feat-sheen::before{content:"";position:absolute;top:-25%;bottom:-25%;left:0;width:45%;background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.15) 50%,rgba(255,255,255,0) 100%);transform:translateX(-240%) skewX(-12deg);animation:featSheen 1050ms var(--ease) 420ms both;will-change:transform}
+      @keyframes featSheen{from{transform:translateX(-240%) skewX(-12deg)}to{transform:translateX(360%) skewX(-12deg)}}
+      .feat-pop .feat-badges,.feat-swap .feat-badges{animation:featTextIn 480ms var(--ease) 90ms both}
+      .feat-pop .feat-name,.feat-swap .feat-name{animation:featTextIn 480ms var(--ease) 175ms both}
+      .feat-pop .feat-dur,.feat-swap .feat-dur{animation:featTextIn 480ms var(--ease) 235ms both}
+      .feat-pop .feat-meta,.feat-swap .feat-meta{animation:featTextIn 480ms var(--ease) 295ms both}
+      @keyframes featTextIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
       /* detail page, PodHours layout: open and one-glance — brand line,
          big title, product art, white-selected range capsules, date boxes,
          one huge duration, daily bars in white */
@@ -545,6 +574,9 @@
       @media (prefers-reduced-motion: reduce){
         *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
         .hero-enter,.hero-float,.hero-shadow,.hero-sheen::before,.pulse,.anim-in,.detail-rise,.view-fade,.use-bar i,nav.tabbar,.ring-fg{animation:none!important}
+        .feat-pop,.feat-swap,.feat-float,.feat-shadow,.feat-img::before,.feat-sheen::before,.feat-pop .feat-img,.feat-swap .feat-img,.feat-pop .feat-badges,.feat-swap .feat-badges,.feat-pop .feat-name,.feat-swap .feat-name,.feat-pop .feat-dur,.feat-swap .feat-dur,.feat-pop .feat-meta,.feat-swap .feat-meta{animation:none!important}
+        .feat-sheen{display:none}
+        .feat-leaving{transition:none!important;transform:none!important;opacity:1!important}
         .hero-sheen{display:none}
         .hero-tilt{transform:none!important;transition:none!important}
         .sheet,.sheet-bg.open .sheet{transform:none!important}
@@ -973,6 +1005,7 @@
       var rangeMode="7";           /* 7 | 30 | custom */
       var detailRange="30";        /* 详情页范围：7 | 30 | 90 | 365 | all，默认 30 天 */
       var featMode="cur";          /* 主页主图切换：cur 当前在用 | top 使用最长 */
+      var featSwapPending=false;   /* 切换主图时为 true：新卡用 .feat-swap 浮现而不是整卡弹窗入场 */
       var customFrom="", customTo="";
       var selHour=null, selDay=null;
       var timerInt=null;
@@ -1129,9 +1162,11 @@
             var st=deviceStats(id);
             var im=deviceImg(dv);
             var chips=badges.map(function(b){ return '<span class="feat-badge">'+b+'</span>'; }).join("");
-            return '<button class="feat-card'+(wide?" feat-wide":"")+'" type="button" data-dev="'+dv.id+'">'
+            return '<button class="feat-card'+(wide?" feat-wide":"")+(featSwapPending?" feat-swap":" feat-pop")+'" type="button" data-dev="'+dv.id+'">'
               + '<span class="feat-badges">'+chips+'</span>'
-              + '<span class="feat-img'+(im.cover?" cover":"")+'"><img src="'+im.src+'" alt="'+esc(dv.name)+'" /></span>'
+              + '<span class="feat-img'+(im.cover?" cover":"")+'"><span class="feat-float"><img src="'+im.src+'" alt="'+esc(dv.name)+'" />'
+              + (im.cover? '' : '<span class="feat-sheen" style="-webkit-mask-image:url('+im.src+');mask-image:url('+im.src+')" aria-hidden="true"></span>')
+              + '</span><span class="feat-shadow" aria-hidden="true"></span></span>'
               + '<span class="feat-name">'+esc(dv.name)+'</span>'
               + '<span class="feat-dur">'+fmtDurHM(st.sum.total)+'</span>'
               + '<span class="feat-meta">'+st.days+' 天 · '+st.sum.count+' 次'
@@ -1241,6 +1276,7 @@
           + '<button class="btn danger" type="button" id="btn-clear">清空全部数据</button></div>'
           + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p></div>';
 
+        featSwapPending=false;
         viewEl.innerHTML=html;
         bindCommon();
         bindHomeExtras();
@@ -1249,7 +1285,22 @@
       /* 主页上的设备卡跳转 + 数据管理按钮（与原设备页同一套行为） */
       function bindHomeExtras(){
         viewEl.querySelectorAll("[data-feat]").forEach(function(b){
-          b.addEventListener("click", function(){ featMode=b.getAttribute("data-feat"); render(); });
+          b.addEventListener("click", function(){
+            var mode=b.getAttribute("data-feat");
+            if(mode===featMode) return;
+            var card=viewEl.querySelector(".feat-card");
+            /* 减弱动效或找不到卡片时直接换，不走过渡 */
+            if(reducedMotion() || !card || card.classList.contains("feat-leaving")){ featMode=mode; render(); return; }
+            /* 苹果弹窗式的顺滑切换：旧卡先轻轻沉下去淡出（170ms），
+               新卡再带弹簧感浮现，图片和文字跟着依次过渡，不生硬替换；
+               切换期间滚动位置保持不动 */
+            card.classList.add("feat-leaving");
+            viewEl.querySelectorAll("[data-feat]").forEach(function(x){ x.classList.toggle("on", x===b); });
+            var y=window.scrollY||0;
+            setTimeout(function(){
+              featMode=mode; featSwapPending=true; render(); window.scrollTo(0,y);
+            },175);
+          });
         });
         viewEl.querySelectorAll("[data-dev]").forEach(function(b){
           b.addEventListener("click", function(){ detailId=b.getAttribute("data-dev"); render(); });
@@ -1771,6 +1822,8 @@
         var isDetail=!!detailId;
         var els=viewEl.querySelectorAll(".banner, .card, .rec-card, .dev-card, .feat-card, .seg");
         els.forEach(function(el,i){
+          /* 主图卡有自己的弹窗式入场（.feat-pop / .feat-swap），不叠通用升起 */
+          if(el.classList.contains("feat-card")) return;
           /* 详情页第一张卡已由 .detail-rise 的弹簧升起负责，不叠第二套动画 */
           if(isDetail && el.classList.contains("card") && el.parentElement && el.parentElement.classList.contains("detail-rise") && el===el.parentElement.querySelector(".card")) return;
           el.classList.add("anim-in");
