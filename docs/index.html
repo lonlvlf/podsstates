@@ -633,22 +633,34 @@
         var p=li.split(":");
         return p.length>1? (p[p.length-2]+":"+p[p.length-1]).toUpperCase() : li.toUpperCase();
       }
-      /* 同名消歧：同型号有两副耳机时，名字后加上各自的蓝牙标识尾号，一眼分清 */
+      /* 尾号不进名字：设备名只留款式名（如「AirPods Pro（第二代）」），
+         同款两副耳机的区分靠副行/详情里的小号灰字尾号（见 devSpec 与详情页）。
+         旧版本曾把尾号拼进名字，这里把已经拼进去的尾巴剥掉，老数据打开即恢复干净名字。 */
+      function stripTailSuffix(name){
+        return String(name||"").replace(/（(?:[0-9A-F]{1,2}:[0-9A-F]{2}(?: · 第 \d+ 副)?|0x[0-9a-fA-F]+|第 \d+ 副)）$/,"");
+      }
       function ensureUniqueNames(list){
-        var groups={};
-        list.forEach(function(d){ (groups[d.name]=groups[d.name]||[]).push(d); });
-        Object.keys(groups).forEach(function(nm){
-          var g=groups[nm];
-          if(g.length<2) return;
-          var used={};
-          g.forEach(function(d,idx){
-            var tail=idTail(d) || d.model || "";
-            var suffix=tail? "（"+tail+"）" : "（第 "+(idx+1)+" 副）";
-            if(used[suffix]) suffix="（"+(tail? tail+" · ":"")+"第 "+(idx+1)+" 副）";
-            used[suffix]=1;
-            if(d.name.indexOf(suffix)===-1) d.name=d.name+suffix;
-          });
-        });
+        list.forEach(function(d){ d.name=stripTailSuffix(d.name); });
+      }
+      /* 是否还有另一副同名耳机（只有同名并存时才需要露尾号区分） */
+      function hasDupName(d){
+        if(!d) return false;
+        for(var i=0;i<S.devices.length;i++){
+          var o=S.devices[i];
+          if(o.id!==d.id && o.name===d.name) return true;
+        }
+        return false;
+      }
+      /* 名字旁的小号灰字尾号：只在同款有两副时出现，不抢标题 */
+      function tailSpanHtml(d){
+        var t=idTail(d);
+        if(!t || !hasDupName(d)) return "";
+        return ' <span style="font-size:.72em;font-weight:500;color:var(--faint)">…'+esc(t)+'</span>';
+      }
+      /* 下拉选项没有副行可放尾号，只能在文字里轻带一笔 */
+      function pickerLabel(d){
+        var t=idTail(d);
+        return d.name + ((t && hasDupName(d))? " · …"+t : "");
       }
       /* 蓝牙产品 ID 表：健康导出的 model 字段就是这个十六进制代码，它才是
          区分款式的硬依据。代码按 The Apple Wiki 的 Bluetooth PIDs 列表与
@@ -756,6 +768,7 @@
          已糅合的历史记录无法再拆分，从下次导入起按新主键分别统计。 */
       function backfillDevices(d){
         (d.devices||[]).forEach(function(dv){
+          dv.name=stripTailSuffix(dv.name);
           dv.rawName=dv.rawName||dv.name||"耳机";
           dv.manufacturer=dv.manufacturer||"";
           dv.model=dv.model||"";
@@ -996,7 +1009,7 @@
             + '<div class="btn-row" style="margin-top:14px"><button class="btn danger" type="button" id="timer-cancel">取消</button>'
             + '<button class="btn primary" type="button" id="timer-stop">停止并保存</button></div>';
         }else if(S.devices.length){
-          var opts=S.devices.map(function(dv){ return '<option value="'+dv.id+'">'+esc(dv.name)+'</option>'; }).join("");
+          var opts=S.devices.map(function(dv){ return '<option value="'+dv.id+'">'+esc(pickerLabel(dv))+'</option>'; }).join("");
           html+='<label class="f" for="timer-device">选择耳机，戴上时开始计时，摘下时停止</label>'
             + '<div class="timer-pick">'+devThumb(S.devices[0], "lg")+'<select id="timer-device">'+opts+'</select></div>'
             + '<button class="btn primary block" type="button" id="timer-start" style="margin-top:12px">开始计时</button>';
@@ -1087,7 +1100,7 @@
             var pct= sum.total>0? u.total/sum.total*100 : 0;
             html+='<div class="use-row"><div class="use-rank">'+(i+1)+'</div>'
               + devThumb(u.dev||u.name, "sm")
-              + '<div class="use-main"><div class="use-top"><span class="use-name">'+esc(u.name)+'</span>'
+              + '<div class="use-main"><div class="use-top"><span class="use-name">'+esc(u.name)+tailSpanHtml(u.dev)+'</span>'
               + '<span class="use-pct">'+(Math.round(pct*10)/10)+'%</span></div>'
               + '<div class="use-dur">'+fmtBigHM(u.total)+'</div>'
               + '<div class="use-bar"><i style="width:'+Math.max(2,pct).toFixed(1)+'%"></i></div></div></div>';
@@ -1306,7 +1319,7 @@
 
         var html='<div class="detail-rise"><button class="back-btn" type="button" id="btn-back" aria-label="返回设备列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>'
           + '<h1 style="font-size:30px">'+esc(d.name)+'</h1>'
-          + '<div class="date-line">'+(d.rawName && d.rawName!==d.name? "设备名 "+esc(d.rawName)+" · " : "")+(st.first? "首次使用 "+fmtDate(st.first) : "还没有使用记录")+'</div>';
+          + '<div class="date-line">'+(d.rawName && d.rawName!==d.name? "设备名 "+esc(d.rawName)+" · " : "")+(st.first? "首次使用 "+fmtDate(st.first) : "还没有使用记录")+(idTail(d)? " · 标识 …"+idTail(d) : "")+'</div>';
 
         var him=deviceImg(d);
         html+='<div class="card">'
@@ -1330,11 +1343,11 @@
         if(S.devices.length>1 && allSum.total>0){
           var C=2*Math.PI*34;
           var others=S.devices.filter(function(x){ return x.id!==detailId; });
-          var legend='<div class="row"><span class="dot" style="background:'+PALETTE[0]+'"></span><span class="lg-name">'+esc(d.name)+'</span><b>'+Math.round(share*100)+'%</b></div>';
+          var legend='<div class="row"><span class="dot" style="background:'+PALETTE[0]+'"></span><span class="lg-name">'+esc(d.name)+tailSpanHtml(d)+'</span><b>'+Math.round(share*100)+'%</b></div>';
           others.forEach(function(o,i){
             var os=deviceStats(o.id).sum;
             var pct=allSum.total>0? Math.round(os.total/allSum.total*100):0;
-            legend+='<div class="row"><span class="dot" style="background:'+PALETTE[(i+1)%PALETTE.length]+'"></span><span class="lg-name">'+esc(o.name)+'</span><b>'+pct+'%</b></div>';
+            legend+='<div class="row"><span class="dot" style="background:'+PALETTE[(i+1)%PALETTE.length]+'"></span><span class="lg-name">'+esc(o.name)+tailSpanHtml(o)+'</span><b>'+pct+'%</b></div>';
           });
           html+='<div class="card"><h2>占全部聆听的比例</h2><div class="donut-wrap">'
             + gradRing(share, '<div class="ring-big" style="font-size:25px">'+Math.round(share*100)+'%</div>', 104)
@@ -1517,7 +1530,7 @@
       /* ---------- 手动补录 ---------- */
       function fillManual(){
         var sel=document.getElementById("man-device");
-        sel.innerHTML=S.devices.map(function(dv){ return '<option value="'+dv.id+'">'+esc(dv.name)+'</option>'; }).join("");
+        sel.innerHTML=S.devices.map(function(dv){ return '<option value="'+dv.id+'">'+esc(pickerLabel(dv))+'</option>'; }).join("");
         var now=new Date();
         document.getElementById("man-date").value=dayKey(now.getTime());
         document.getElementById("man-time").value=pad(now.getHours())+":"+pad(now.getMinutes());
