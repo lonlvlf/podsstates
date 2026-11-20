@@ -15,7 +15,7 @@
          见 CSS 里 .wrap 上方的注释。 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Pods Stats" />
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=40","background_color":"%230d1626","theme_color":"%230d1626"}' />
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=41","background_color":"%230d1626","theme_color":"%230d1626"}' />
     <!-- 主屏幕 App 会把旧页面缓存得很死：明确要求不缓存，让布局修正能真正下发到已添加的图标 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -36,7 +36,7 @@
           (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
         if(!standalone) return;
         document.documentElement.classList.add("ios-standalone");
-        var BUILD_V = "40";
+        var BUILD_V = "41";
         try{
           var u = new URL(window.location.href);
           if(u.searchParams.get("v") !== BUILD_V){
@@ -414,9 +414,8 @@
          不呼吸、不跟随旋转（画布在它上方、透明底，阴影透过画布可见）。 */
       .feat-card.on3d .feat-shadow{width:68%;height:30px;bottom:-2px;opacity:.88;background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.66), rgba(0,0,0,0) 68%);filter:blur(5px)}
       .hero-stage.on3d .hero-shadow{width:62%;height:32px;bottom:0;opacity:.88;background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.66), rgba(0,0,0,0) 68%);filter:blur(5px)}
-      .gl-credit{display:none;font-size:10.5px;color:var(--faint);letter-spacing:.02em;margin-top:5px;text-align:center}
-      .feat-card.on3d .gl-credit{display:block}
-      .detail-rise.on3d .gl-credit{display:block}
+      /* 3D 模型署名行已按用户要求从模型下方去掉；CC BY 4.0 署名改放到
+         主页底部「数据管理」卡里保留（见 renderToday / 设备页同名卡） */
       /* detail page, PodHours layout: open and one-glance — brand line,
          big title, product art, white-selected range capsules, date boxes,
          one huge duration, daily bars in white */
@@ -1236,7 +1235,6 @@
               + '<span class="feat-dur">'+fmtDurHM(st.sum.total)+'</span>'
               + '<span class="feat-meta">'+st.days+' 天 · '+st.sum.count+' 次'
               + (fLast[id]? ' · 最近 '+fmtDateShort(fLast[id]) : '')+'</span>'
-              + (m3? '<span class="gl-credit">3D 模型：AirPods Pro · JY_JY_ · CC BY 4.0</span>' : '')
               + '</button>';
           };
           if(curId && topId && curId!==topId){
@@ -1342,7 +1340,8 @@
           + '<div class="btn-row" style="margin-top:6px">'
           + '<button class="btn" type="button" id="btn-restore">恢复备份</button>'
           + '<button class="btn danger" type="button" id="btn-clear">清空全部数据</button></div>'
-          + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p></div>';
+          + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p>'
+          + '<p class="note">3D 模型来源：「AirPods Pro」by JY_JY_，按 CC BY 4.0 授权使用。</p></div>';
 
         featSwapPending=false;
         viewEl.innerHTML=html;
@@ -1622,7 +1621,8 @@
           + '<div class="btn-row" style="margin-top:10px">'
           + '<button class="btn" type="button" id="btn-restore">恢复备份</button>'
           + '<button class="btn danger" type="button" id="btn-clear">清空全部数据</button></div>'
-          + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p></div>';
+          + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p>'
+          + '<p class="note">3D 模型来源：「AirPods Pro」by JY_JY_，按 CC BY 4.0 授权使用。</p></div>';
 
         viewEl.innerHTML=html;
         bindCommon();
@@ -1750,9 +1750,9 @@
            （见下方灯光与材质 envMapIntensity），让盒面呈平面产品图那种
            柔和的灰白过渡，而不是刺眼的纯白。 */
         renderer.toneMappingExposure=.72;
-        /* 真投影：模型自己投在地面上的阴影（shadow-catcher），不是画布
-           外面糊一层 CSS 椭圆——上一版 CSS 阴影位置按容器底部估算、跟
-           模型实际落点对不齐，在深底上对比又弱，手机上看不见。 */
+        /* 投影只留模型自身：耳塞投到盒身上这类自投影靠 shadowMap；
+           地面承接层（ShadowMaterial 大投影）已按用户要求整个去掉，
+           地面上不再摊开影子，只剩盒底紧贴的接触暗影（见下方 blob）。 */
         renderer.shadowMap.enabled=true;
         renderer.shadowMap.type=THREE.PCFSoftShadowMap;
         if("outputColorSpace" in renderer && THREE.SRGBColorSpace) renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -1842,32 +1842,25 @@
           pose.position.set(-c.x*s, -c.y*s-.10, -c.z*s);
           group.add(pose);
           /* 材质压暗 + 开投影：环境反射减半是去掉过曝发白的关键一刀；
-             每个网格既投阴影（投到地面、耳塞投到盒身上）也收阴影，
-             模型自身的明暗层次才立得住。 */
+             每个网格既投阴影（耳塞投到盒身上这类自投影）也收阴影，
+             模型自身的明暗层次才立得住；地面投影已去掉、不往地上投。 */
           model.traverse(function(o){
             if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
             var ms=Array.isArray(o.material)? o.material : (o.material? [o.material] : []);
             ms.forEach(function(m){ if(m && "envMapIntensity" in m) m.envMapIntensity=.42; });
           });
-          /* ——— 落地阴影（场景内，贴着盒底，固定不动）———
-             按摆正缩放后的真实包围盒取底边 y，地面就铺在底边正下方：
-             一层 ShadowMaterial 只收主光投影（模型本体的轮廓阴影），
-             上面再叠一层径向渐变接触暗影（画布纹理，深芯向外化开），
-             像平面产品图脚下那团柔和深影，把盒子稳稳托在地上。
-             地面挂在 scene 上不进旋转组：拖动转模型时阴影不跟着跑。 */
+          /* ——— 盒底接触暗影（保留，固定不动）———
+             按摆正缩放后的真实包围盒取底边 y，只在盒底正下方贴一层
+             径向渐变接触暗影（画布纹理，深芯向外化开），像平面产品图
+             脚下那团柔和深影，把盒子稳稳托住。主光投在地面上摊开的
+             大投影（ShadowMaterial 承接层）已按用户要求整个去掉，
+             地面上不再有摊开的影子。接触影挂在 scene 上不进旋转组：
+             拖动转模型时它不跟着跑。 */
           group.updateMatrixWorld(true);
           var gb=new THREE.Box3().setFromObject(group);
           var gSize=new THREE.Vector3(); gb.getSize(gSize);
           var gC=new THREE.Vector3(); gb.getCenter(gC);
           var groundY=gb.min.y;
-          var catcher=new THREE.Mesh(
-            new THREE.PlaneGeometry(9, 9),
-            new THREE.ShadowMaterial({ opacity:.26 })
-          );
-          catcher.rotation.x=-Math.PI/2;
-          catcher.position.set(gC.x, groundY-.012, gC.z);
-          catcher.receiveShadow=true;
-          scene.add(catcher);
           try{
             var bc=document.createElement("canvas"); bc.width=bc.height=256;
             var bx=bc.getContext("2d");
@@ -1887,7 +1880,7 @@
             scene.add(blob);
           }catch(e){}
           view.ready=true;
-          /* 模型到位才藏平面图、亮署名；没到位前平面图一直都在 */
+          /* 模型到位才藏平面图；没到位前平面图一直都在 */
           [box.closest(".feat-card"), box.closest(".hero-stage"), box.closest(".detail-rise")].forEach(function(h){ if(h) h.classList.add("on3d"); });
         }, function(){ box.remove(); });
       }
@@ -2014,8 +2007,7 @@
           + '<span class="hero-sheen" style="-webkit-mask-image:url('+him.src+');mask-image:url('+him.src+')" aria-hidden="true"></span>'
           + '</div></div></div><div class="hero-shadow" aria-hidden="true"></div>'
           + (hm3? '<div class="hero-3dbox" data-model3d="'+hm3+'" aria-hidden="true"></div>' : '')
-          + '</div>'
-          + (hm3? '<div class="gl-credit" style="margin:-6px 0 10px">3D 模型：AirPods Pro · JY_JY_ · CC BY 4.0 · 拖动可旋转</div>' : '');
+          + '</div>';
 
         var ranges=[["7","7天"],["30","30天"],["90","90天"],["365","1年"],["all","全部"]];
         html+='<div class="seg drange" role="group" aria-label="时间范围">'
