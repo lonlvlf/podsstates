@@ -15,7 +15,7 @@
          见 CSS 里 .wrap 上方的注释。 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Pods Stats" />
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=46","background_color":"%230d1626","theme_color":"%230d1626"}' />
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=47","background_color":"%230d1626","theme_color":"%230d1626"}' />
     <!-- 主屏幕 App 会把旧页面缓存得很死：明确要求不缓存，让布局修正能真正下发到已添加的图标 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -36,7 +36,7 @@
           (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
         if(!standalone) return;
         document.documentElement.classList.add("ios-standalone");
-        var BUILD_V = "46";
+        var BUILD_V = "47";
         try{
           var u = new URL(window.location.href);
           if(u.searchParams.get("v") !== BUILD_V){
@@ -1378,7 +1378,8 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
          随包附带的 meshoptimizer 官方 decoder，MIT 授权，独立文件
          assets/meshopt-decoder.js，加载器已接全局 MeshoptDecoder）。
          模型是粉色配色（官方配色
-         之一），几何与贴图未改色。Max 是头戴式、没有充电盒：接触暗影
+         之一），几何未改；颜色在加载时按 MODEL3D_SPEC.maxGray 覆盖成
+         深空灰（见规格注释），大小另有 maxScale 修正。Max 是头戴式、没有充电盒：接触暗影
          按它自己的落点（耳罩下沿）由同一套 blob 逻辑生成，亮度、
          取景、灯光与其它款式共用 MODEL3D_SPEC。 */
       var MODELS3D={
@@ -1390,10 +1391,22 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
       /* 全系列共用的呈现规格（v41 在 Pro 上定稿的数值，一处定义处处用）：
          exposure 曝光；camFov / camY / camZ 相机；keyI / fillI / rimI /
          hemiI 四路灯光强度；envI 材质环境反射；fitH / fitW 模型贴合
-         画布的系数；dropY 模型下沉量；defRotX 默认小俯仰。 */
+         画布的系数；dropY 模型下沉量；defRotX 默认小俯仰。
+         maxScale / maxGray 是只针对 Max 的两条文件属性修正（不影响
+         其它款）：Max 是头戴式、包围盒被实体填满（Pro 的盒身包围盒
+         四角是空的、实体只占约八成），共用同一套贴合系数时 Max 渲染
+         高占比实测 0.976、Pro 是 0.840——maxScale=.775 是 390px 画布
+         实测标定的：乘上后 Max 高占比 0.840，与 Pro 对齐；
+         Max 模型文件自带粉色配色（贴图 + 两个材质的 emissive 辉光
+         都是粉的），maxGray 是加载时按材质名覆盖的深空灰配色表，
+         覆盖时同时清 map 与 emissive，只清贴图压不掉辉光的粉。 */
       var MODEL3D_SPEC={ exposure:.72, camFov:34, camY:.55, camZ:5.2,
         keyI:.95, fillI:.28, rimI:.5, hemiI:.27, envI:.42,
-        fitH:1.10, fitW:1.06, dropY:.10, defRotX:.12 };
+        fitH:1.10, fitW:1.06, dropY:.10, defRotX:.12,
+        maxScale:.775,
+        maxGray:{ "Material.014":"#3a3d42", "Material.007":"#3a3d42", "Material.010":"#3a3d42",
+                  "Material.013":"#565a61", "Material":"#565a61", "Material.009":"#565a61",
+                  "Material.012":"#c9ccd1" } };
       /* Pro 模型文件本身是斜着摆拍的：盒身在模型数据里就带约 -22°
          的侧倾（绕 Z 轴），耳塞也是悬在盒口上方的展示姿势——不是查看器
          转出来的。注册表里 rz=+.38 是在内层姿势组上的摆正校正（实测
@@ -2147,7 +2160,8 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
         startGlLoop();
       }
       function setup3DBox(box){
-        var def=MODELS3D[box.getAttribute("data-model3d")];
+        var mkey=box.getAttribute("data-model3d");
+        var def=MODELS3D[mkey];
         if(!def){ box.remove(); return; }
         var url=def.url;
         var renderer;
@@ -2247,6 +2261,9 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
              实体约占高九成、宽约五成，和平面产品图的 presence 一致，
              且包围盒空角先出画、实体不裁切。 */
           var s=Math.min(MODEL3D_SPEC.fitH*visH/(Math.max(size.y,.0001)*tiltF), MODEL3D_SPEC.fitW*visW/Math.max(size.x,.0001));
+          /* Max 单独缩小：包围盒被实体填满，共用系数会比 Pro 大一圈，
+             乘 maxScale 后渲染高占比与 Pro 对齐（实测标定，见规格注释） */
+          if(mkey==="max" && MODEL3D_SPEC.maxScale) s*=MODEL3D_SPEC.maxScale;
           pose.scale.setScalar(s);
           /* 整体下移 0.10：实体轮廓在包围盒里偏上，不下移盒底会离底部
              阴影一截、看着飘；下移后盒底正落在静态阴影上。 */
@@ -2258,7 +2275,17 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
           model.traverse(function(o){
             if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; }
             var ms=Array.isArray(o.material)? o.material : (o.material? [o.material] : []);
-            ms.forEach(function(m){ if(m && "envMapIntensity" in m) m.envMapIntensity=MODEL3D_SPEC.envI; });
+            ms.forEach(function(m){
+              if(!m) return;
+              if("envMapIntensity" in m) m.envMapIntensity=MODEL3D_SPEC.envI;
+              /* Max 改深空灰：模型文件是粉色配色——清掉颜色贴图、按材质
+                 名给灰、再清掉 emissive 辉光（耳罩外壳 #4e2b2b、耳垫
+                 #ff9090 两处辉光不清的话灰色压不住粉）；只动 Max。 */
+              if(mkey==="max" && MODEL3D_SPEC.maxGray){
+                var g=MODEL3D_SPEC.maxGray[m.name];
+                if(g){ m.map=null; m.color.set(g); if(m.emissive) m.emissive.set(0x000000); m.needsUpdate=true; }
+              }
+            });
           });
           /* ——— 盒底接触暗影（保留，固定不动）———
              按摆正缩放后的真实包围盒取底边 y，只在盒底正下方贴一层
