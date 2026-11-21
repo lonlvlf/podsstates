@@ -15,7 +15,7 @@
          见 CSS 里 .wrap 上方的注释。 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Pods Stats" />
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=50","background_color":"%230d1626","theme_color":"%230d1626"}' />
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=51","background_color":"%230d1626","theme_color":"%230d1626"}' />
     <!-- 主屏幕 App 会把旧页面缓存得很死：明确要求不缓存，让布局修正能真正下发到已添加的图标 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -36,7 +36,7 @@
           (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
         if(!standalone) return;
         document.documentElement.classList.add("ios-standalone");
-        var BUILD_V = "50";
+        var BUILD_V = "51";
         try{
           var u = new URL(window.location.href);
           if(u.searchParams.get("v") !== BUILD_V){
@@ -2184,6 +2184,70 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
         boxes.forEach(function(box){ setup3DBox(box); });
         startGlLoop();
       }
+      /* ---------- AirPods 4 白模补细节（防尘网 / 传感器点 / 指示灯） ----------
+         Hunyuan 白模是单体融合网格、没有贴图：耳塞头光秃秃的，出音防尘网
+         和皮肤传感器点都没有，盒身正面的指示灯只剩一个白色小凸点。补法
+         是往模型表面贴三组小几何（压扁椭球），不动模型本体、大小和其它
+         款。定位全部走 raycast：锚点按模型包围盒分数给出（离线对着真机
+         产品图 + 模型深度图逐点标定过），运行时从正前方打射线取第一个
+         交点与面法线，椭球按法线定向、沉进表面约三分之一厚，只露一个
+         浅盖——不悬空、不陷没。锚点（fx 自左、fy 自上）：
+           防尘网  (.330,.322) / (.670,.322)：耳塞头上部前坡面，法线约
+             上前方 45°，和真机图里网罩裹在头顶前沿的位置一致；长轴按
+             「上」投影到切平面后再向盒心倾斜约 29°，左右镜像。
+           传感器点 (.370,.428) / (.630,.428)：耳塞头中部、偏盒心一侧
+             的正面，略带椭圆，倾斜与网罩同向镜像。
+           指示灯  (.500,.540)：盒身正面中央——白模在这里本就有一个小
+             凸点（raycast 实测比周围正面高约 .011），绿灯盖直接扣在
+             凸点上，替代原来的白点。
+         尺寸按真机图与耳机头的比例定的（头宽约 .46 个模型单位）：网罩
+         露出约 .075×.146、传感器点约 .058×.086、绿灯约 Ø.052，在
+         390px 渲染下分别约 8×15px、6×10px、Ø6px，看得清但不抢眼。 */
+      function addAp4Details(group, model){
+        group.updateMatrixWorld(true);
+        var bb=new THREE.Box3().setFromObject(model);
+        var size=new THREE.Vector3(); bb.getSize(size);
+        var rc=new THREE.Raycaster();
+        var darkMat=new THREE.MeshStandardMaterial({ color:0x191a1d, roughness:.62, metalness:0 });
+        darkMat.envMapIntensity=MODEL3D_SPEC.envI;
+        var ledMat=new THREE.MeshStandardMaterial({ color:0x2fbf71, roughness:.35, metalness:0,
+          emissive:0x1fc463, emissiveIntensity:.55 });
+        ledMat.envMapIntensity=MODEL3D_SPEC.envI;
+        function snap(fx, fy){
+          var o=new THREE.Vector3(bb.min.x+size.x*fx, bb.max.y-size.y*fy, bb.max.z+5);
+          rc.set(o, new THREE.Vector3(0,0,-1));
+          var hits=rc.intersectObject(model, true);
+          if(!hits.length || !hits[0].face) return null;
+          var n=hits[0].face.normal.clone().transformDirection(hits[0].object.matrixWorld).normalize();
+          return { p:hits[0].point, n:n };
+        }
+        function patch(fx, fy, rx, ry, rz, tilt, mat){
+          var s=snap(fx, fy);
+          if(!s) return;
+          var N=s.n;
+          var up=new THREE.Vector3(0,1,0);
+          var Y=up.clone().sub(N.clone().multiplyScalar(up.dot(N)));
+          if(Y.lengthSq()<1e-6) return;
+          Y.normalize();
+          var X=new THREE.Vector3().crossVectors(Y, N).normalize();
+          var ca=Math.cos(tilt), sa=Math.sin(tilt);
+          var X2=X.clone().multiplyScalar(ca).add(Y.clone().multiplyScalar(sa));
+          var Y2=Y.clone().multiplyScalar(ca).sub(X.clone().multiplyScalar(sa));
+          var m=new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), mat);
+          m.scale.set(rx, ry, rz);
+          m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(X2, Y2, N));
+          m.position.copy(s.p).add(N.clone().multiplyScalar(-rz*.35));
+          group.add(m);
+        }
+        /* 防尘网：长轴向盒心倾斜（tilt 符号按耳塞所在侧镜像） */
+        patch(.330, .322, .040, .078, .012, -.5, darkMat);
+        patch(.670, .322, .040, .078, .012,  .5, darkMat);
+        /* 传感器点：头中部偏盒心，倾斜同为镜像 */
+        patch(.370, .428, .031, .046, .010, -.45, darkMat);
+        patch(.630, .428, .031, .046, .010,  .45, darkMat);
+        /* 指示灯：扣在盒身正面原有的小凸点上 */
+        patch(.500, .540, .027, .027, .010, 0, ledMat);
+      }
       function setup3DBox(box){
         var mkey=box.getAttribute("data-model3d");
         var def=MODELS3D[mkey];
@@ -2316,6 +2380,9 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
               }
             });
           });
+          /* AirPods 4 白模补细节：防尘网 / 传感器点 / 绿灯贴到耳塞头与
+             盒身表面（raycast 定位，只动 4 代，见 addAp4Details） */
+          if(mkey==="ap4"){ try{ addAp4Details(group, model); }catch(e){} }
           /* ——— 盒底接触暗影（保留，固定不动）———
              按摆正缩放后的真实包围盒取底边 y，只在盒底正下方贴一层
              径向渐变接触暗影（画布纹理，深芯向外化开），像平面产品图
