@@ -15,7 +15,7 @@
          见 CSS 里 .wrap 上方的注释。 -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Pods Stats" />
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=45","background_color":"%230d1626","theme_color":"%230d1626"}' />
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Pods Stats 耳机统计","short_name":"Pods Stats","display":"standalone","start_url":".?v=46","background_color":"%230d1626","theme_color":"%230d1626"}' />
     <!-- 主屏幕 App 会把旧页面缓存得很死：明确要求不缓存，让布局修正能真正下发到已添加的图标 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -36,7 +36,7 @@
           (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
         if(!standalone) return;
         document.documentElement.classList.add("ios-standalone");
-        var BUILD_V = "45";
+        var BUILD_V = "46";
         try{
           var u = new URL(window.location.href);
           if(u.searchParams.get("v") !== BUILD_V){
@@ -1108,8 +1108,9 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
         { k:["a3047","a3048","a3049","device1,8228","airpodspro2,1"], label:"AirPods Pro（第二代 · USB-C）", line:"pro" },
         { k:["airpodspro1,2","a2698","a2699","a2700","device1,8212"], label:"AirPods Pro（第二代）", line:"pro" },
         { k:["airpodspro1,1","airpods2,2","a2083","a2084","a2190"], label:"AirPods Pro（第一代）", line:"pro" },
+        { k:["a3531","a3532","a3533","a3439","a3440","a3441","airpods3,7","airpods3,8","device1,8246"], label:"AirPods 5", line:"airpods" },
         { k:["a3055","a3056","a3057","device1,8219"], label:"AirPods 4（主动降噪版）", line:"airpods" },
-        { k:["a3050","a3053","device1,8217"], label:"AirPods 4", line:"airpods" },
+        { k:["a3050","a3053","a3054","device1,8217"], label:"AirPods 4", line:"airpods" },
         { k:["airpods1,3","a2564","a2565","device1,8211"], label:"AirPods（第三代）", line:"airpods" },
         { k:["airpods2,1","airpods1,2","a2031","a2032"], label:"AirPods（第二代）", line:"airpods" },
         { k:["airpods1,1","a1523","a1722"], label:"AirPods（第一代）", line:"airpods" }
