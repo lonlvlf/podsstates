@@ -36,7 +36,7 @@
           (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
         if(!standalone) return;
         document.documentElement.classList.add("ios-standalone");
-        var BUILD_V = "55";
+        var BUILD_V = "56";
         try{
           var u = new URL(window.location.href);
           if(u.searchParams.get("v") !== BUILD_V){
@@ -648,8 +648,6 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
       .dev-total small{font-size:12.5px;color:var(--sub);font-weight:550}
       .dev-meta{display:block;font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .dev-sub{display:block;font-size:12.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-      /* 一览入口/列表行里的说明文字允许换行，不许被省略号截断 */
-      .wt{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
       .chev{color:var(--faint);flex:none}
       .chev svg{width:18px;height:18px}
       /* home feature: one enlarged product-art card as the main visual —
@@ -1390,8 +1388,6 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
       /* ---------- 界面状态 ---------- */
       var view="today";
       var detailId=null;
-      var gallerySel=null;          /* 全部型号一览里被点开看的那一款 key */
-      var galleryFrom="today";      /* 从哪个视图进的一览，返回时回到那个视图 */
       var rangeMode="7";           /* 7 | 30 | custom */
       var detailRange="all";       /* 详情页范围：7 | 30 | 90 | 365 | all，默认全部时间（统计卡跟随此范围） */
       var featMode="cur";          /* 主页主图切换：cur 当前在用 | top 使用最长 */
@@ -1580,9 +1576,8 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
          AirPods 5 已于 2026 年 9 月发布，是独立一款：它与 4 代外观
          完全相同（苹果官网对比页逐项一致：耳塞 30.2 × 18.3 ×
          18.1 mm、4.3 克，充电盒 46.2 × 50.1 × 21.2 mm，差别只在内
-         部的降噪、防水与续航），没有单独的免费模型，在「全部型号」
-         一览里单独列条目、不与 4 代合并，但直接共用 4 代的 ap4 真
-         模型（见 GALLERY 里 ap5 条目）。
+         部的降噪、防水与续航），没有单独的免费模型，识别上不与
+         4 代合并，但详情页主图直接共用 4 代的 ap4 真模型。
          AirPods Max：「AirPods Max」by molignanoantonio12（Sketchfab，
          CC-BY-4.0，元数据可核），经 Objaverse 分发；原始 28MB / 78 万
          面，用 gltfpack 简化到 35% + meshopt 压缩到 3.5MB（解码器是
@@ -1619,7 +1614,7 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
          覆盖时同时清 map 与 emissive，只清贴图压不掉辉光的粉。
          ap4Scale 是只针对 AirPods 4 真模型的一条同样的文件属性
          修正；数值按与 maxScale 相同的实测法标定——390px 宽渲染
-         一览页，量「亮像素（RGB 都 >170）成行包围盒高 / hero 舞台
+         详情页，量「亮像素（RGB 都 >170）成行包围盒高 / hero 舞台
          高」，同一管线实测新模型在 ap4Scale=.77 时 bright_ratio
          为 0.783、Pro 二代为 0.838，ap4Scale 改 .82 后预计约
          0.834，与 Pro 对齐。
@@ -1631,7 +1626,7 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
          盒子在 390px 下的显示宽度与 4 代盒子一致；对齐目标同
          ap4：390px 下 bright_ratio 与 4 代的 0.838 同档。
          pro3Scale 同理，只针对 AirPods Pro 3 真模型：按同一实测
-         法标定——390px 宽渲染一览页，pro3Scale=.79 时 bright_ratio
+         法标定——390px 宽渲染详情页，pro3Scale=.79 时 bright_ratio
          为 0.768、明显显小；改 .86 后实测 0.842，与 Pro 二代的
          0.838 同档。 */
       var MODEL3D_SPEC={ exposure:.72, camFov:34, camY:.55, camZ:5.2,
@@ -1895,11 +1890,6 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
           + '<button class="btn danger" type="button" id="btn-clear">清空全部数据</button></div>'
           + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p>'
           + '<p class="note">'+model3DCreditLine()+'</p></div>';
-
-        /* 全部型号一览入口放页尾最后一张：不挤占数据管理卡的位置
-           （它首行按钮曾因上方多出一张卡被压进浮动底栏下，390px 审计
-           实测遮挡）；页尾 204px 留白保证滑到底时整卡在底栏上方 */
-        html+=galleryEntryHtml();
 
         featSwapPending=false;
         viewEl.innerHTML=html;
@@ -2182,8 +2172,6 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
           + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p>'
           + '<p class="note">'+model3DCreditLine()+'</p></div>';
 
-        html+=galleryEntryHtml();
-
         viewEl.innerHTML=html;
         bindCommon();
         viewEl.querySelectorAll("[data-dev]").forEach(function(b){
@@ -2201,116 +2189,6 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
             cl.setAttribute("data-arm","1"); cl.textContent="再点一次确认清空";
             setTimeout(function(){ cl.removeAttribute("data-arm"); cl.textContent="清空全部数据"; },3000);
           }
-        });
-      }
-
-      /* ---------- 全部型号一览（不依赖用户数据） ----------
-         用户没有的款式（比如 Max）平时在自己的数据里根本看不到，这里
-         给一个独立入口：按系列列出全部型号，有真 3D 的款式点开就是
-         同一套 MODEL3D_SPEC 渲染、可拖动旋转；没有的显示平面图并如
-         实标明。条目与 deviceModel3D 的映射保持一致（Pro 一/二代共用
-         pro 模型、Max 三款共用 max 模型、AirPods 4 用 ap4
-         （「AirPods 4」by 3dFalah 真模型）、AirPods（第三代）用 ap3
-         （「AirPods 3」by Polyman_3D 真模型）、AirPods Pro 3 用 pro3
-         （「AirPods Pro 3」by apple-user 真模型），其余没有真 3D 的款式
-         model=null 走平面图），
-         不改任何导入与设备识别逻辑。AirPods 5 是 2026 年 9 月发布的
-         独立一款，单独列条目、不与 4 代合并；它与 4 代外观完全相同
-         （苹果官网对比页：耳塞 30.2 × 18.3 × 18.1 mm、4.3 克，充电盒
-         46.2 × 50.1 × 21.2 mm，两代逐项一致，差别只在内部的降噪、
-         防水与续航），所以一览里 5 代直接共用 4 代的 ap4 真模型；
-         它的蓝牙型号代码尚未确认，codes 留空、不猜。 */
-      var GALLERY=[
-        { group:"AirPods", items:[
-          { key:"ap1", name:"AirPods（第一代）", line:"airpods", codes:["0x2002"], model:null },
-          { key:"ap2", name:"AirPods（第二代）", line:"airpods", codes:["0x200f"], model:null },
-          { key:"ap3", name:"AirPods（第三代）", line:"airpods", codes:["0x2013"], model:"ap3", note:"3D 模型：「AirPods 3」by Polyman_3D，CC-BY 4.0；耳塞悬在开盖盒子上方，是模型原姿态" },
-          { key:"ap4", name:"AirPods 4", line:"airpods", codes:["0x2019","0x201b"], model:"ap4", note:"含主动降噪版，外观相同；3D 模型：「AirPods 4」by 3dFalah，CC-BY 4.0" },
-          { key:"ap5", name:"AirPods 5", line:"airpods", codes:[], model:"ap4", note:"2026 年 9 月发布；外观与 AirPods 4 完全相同，共用同一个 3D 模型" }
-        ]},
-        { group:"AirPods Pro", items:[
-          { key:"pro1", name:"AirPods Pro（第一代）", line:"pro", codes:["0x200e"], model:"pro" },
-          { key:"pro2", name:"AirPods Pro（第二代）", line:"pro", codes:["0x2014","0x2024"], model:"pro", note:"Lightning 与 USB-C 版外观相同，共用同一个模型" },
-          { key:"pro3", name:"AirPods Pro 3", line:"pro", codes:["0x2027"], model:"pro3", note:"3D 模型：「AirPods Pro 3」by apple-user，Sketchfab Free Standard（非 CC 授权）；耳塞悬在开盖盒子上方，是模型原姿态" }
-        ]},
-        { group:"AirPods Max", items:[
-          { key:"max1", name:"AirPods Max（Lightning）", line:"max", codes:["0x200a"], model:"max" },
-          { key:"max2", name:"AirPods Max（USB-C）", line:"max", codes:["0x201f"], model:"max" },
-          { key:"max3", name:"AirPods Max 2", line:"max", codes:["0x202d"], model:"max" }
-        ]}
-      ];
-      function galleryItem(key){
-        var found=null;
-        GALLERY.forEach(function(g){ g.items.forEach(function(it){ if(it.key===key) found=it; }); });
-        return found;
-      }
-      function galleryEntryHtml(){
-        return '<button class="dev-card" type="button" data-gallery-open style="margin-top:12px">'
-          + devThumb({ name:"全部型号", line:"pro" })
-          + '<span class="dev-main"><span class="dev-name">全部型号 · 3D 模型一览</span>'
-          + '<span class="dev-meta wt" style="display:block">AirPods 1–5 代 · Pro 1–3 代 · Max 系列</span>'
-          + '<span class="dev-sub wt">不用拥有这些耳机也能看：有真 3D 的点开可拖动旋转，没有的显示平面图</span></span>'
-          + '<span class="chev">'+ICON_CHEV+'</span></button>';
-      }
-      function renderGallery(){
-        var backSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>';
-        var it=gallerySel? galleryItem(gallerySel) : null;
-        if(gallerySel && !it) gallerySel=null;
-        var html="";
-        if(!it){
-          html+='<div class="d-top"><button class="back-btn" type="button" id="gal-back" aria-label="返回">'+backSvg+'</button>'
-            + '<span class="d-last">3D 模型一览</span></div>'
-            + '<h1 class="d-title">全部型号</h1>'
-            + '<p class="note" style="margin:2px 0 14px">按系列列出全部型号。有真 3D 模型的款式点开可以拖动旋转；还没有免费 3D 模型的款式显示平面图，并如实标明。</p>';
-          GALLERY.forEach(function(g){
-            html+='<div class="sec-head"><h2>'+g.group+'</h2></div>';
-            g.items.forEach(function(item){
-              html+='<button class="dev-card" type="button" data-gal="'+item.key+'">'
-                + devThumb({ name:item.name, line:item.line })
-                + '<span class="dev-main"><span class="dev-name">'+esc(item.name)+'</span>'
-                + '<span class="dev-meta wt" style="display:block">'+(item.model? '真 3D 模型 · 点开可拖动旋转' : '平面图 · 暂无免费 3D 模型')+'</span>'
-                + (item.note? '<span class="dev-sub wt">'+esc(item.note)+'</span>' : '')
-                + '</span><span class="chev">'+ICON_CHEV+'</span></button>';
-            });
-          });
-        }else{
-          var im=deviceImg({ name:it.name, line:it.line });
-          html+='<div class="d-top"><button class="back-btn" type="button" id="gal-back" aria-label="返回全部型号">'+backSvg+'</button>'
-            + '<span class="d-last">'+(it.model? '真 3D 模型' : '平面图')+'</span></div>'
-            + '<h1 class="d-title">'+esc(it.name)+'</h1>'
-            + '<div class="hero-stage'+(it.model?" has3d":"")+'"><div class="hero-enter"><div class="hero-float"><div class="hero-tilt">'
-            + '<img '+(im.cover?'class="cover" ':'')+'src="'+im.src+'" alt="'+esc(it.name)+'" draggable="false" />'
-            + '</div></div></div><div class="hero-shadow" aria-hidden="true"></div>'
-            + (it.model? '<div class="hero-3dbox" data-model3d="'+it.model+'" aria-hidden="true"></div>' : '')
-            + '</div>'
-            + '<div class="card"><h2>这款的样子</h2>'
-            + '<p class="note" style="margin:0">'
-            + (it.model? '真 3D 模型，和设备详情页同一套呈现规格（正面姿态、同一套灯光与盒底接触暗影）。按住模型左右拖动可以旋转查看，松手停在拖到的角度。'
-                       : '这款还没有找到符合要求的免费 3D 模型（开盖 + 双耳塞、产品级、授权明确），先显示平面图，不拿别的款式的模型冒充。')
-            + (it.note? '<br>'+esc(it.note)+'。' : '')
-            + (it.codes.length? '<br>蓝牙型号代码：'+it.codes.map(function(c){ return c.toUpperCase().replace("0X","0x"); }).join(" / ")+'。' : '')
-            + '</p>';
-          var mine=null;
-          if(it.codes.length){
-            for(var i=0;i<S.devices.length;i++){
-              if(it.codes.indexOf(((S.devices[i].model||"").trim().toLowerCase()))!==-1){ mine=S.devices[i]; break; }
-            }
-          }
-          if(mine) html+='<div class="btn-row" style="margin-top:12px"><button class="btn primary" type="button" data-mine="'+mine.id+'">查看我的这副「'+esc(mine.name)+'」</button></div>';
-          html+='</div>';
-        }
-        viewEl.innerHTML=html;
-        bindCommon();
-        var bk=document.getElementById("gal-back");
-        if(bk) bk.addEventListener("click", function(){
-          if(gallerySel){ gallerySel=null; render(); }
-          else{ view=galleryFrom; render(); }
-        });
-        viewEl.querySelectorAll("[data-gal]").forEach(function(b){
-          b.addEventListener("click", function(){ gallerySel=b.getAttribute("data-gal"); render(); });
-        });
-        viewEl.querySelectorAll("[data-mine]").forEach(function(b){
-          b.addEventListener("click", function(){ detailId=b.getAttribute("data-mine"); gallerySel=null; render(); });
         });
       }
 
@@ -2882,13 +2760,12 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
       /* ---------- 渲染调度 ---------- */
       function render(){
         document.querySelectorAll(".tab").forEach(function(t){
-          t.classList.toggle("on", t.getAttribute("data-tab")===view || (view==="gallery" && t.getAttribute("data-tab")===galleryFrom));
+          t.classList.toggle("on", t.getAttribute("data-tab")===view);
         });
         stopTimerTick();
         if(detailId){ renderDetail(); }
         else if(view==="today") renderToday();
         else if(view==="stats") renderStats();
-        else if(view==="gallery") renderGallery();
         else renderDevices();
         applyEntrance();
         init3DBoxes();
@@ -2903,9 +2780,6 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
         });
         viewEl.querySelectorAll("[data-open]").forEach(function(b){
           b.addEventListener("click", function(){ openSheet(b.getAttribute("data-open")); });
-        });
-        viewEl.querySelectorAll("[data-gallery-open]").forEach(function(b){
-          b.addEventListener("click", function(){ galleryFrom=view; view="gallery"; gallerySel=null; render(); });
         });
         viewEl.querySelectorAll("[data-hour]").forEach(function(b){
           b.addEventListener("click", function(){
@@ -3006,7 +2880,7 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
         bg.querySelectorAll("[data-close]").forEach(function(b){ b.addEventListener("click", closeSheets); });
       });
       document.querySelectorAll(".tab").forEach(function(t){
-        t.addEventListener("click", function(){ view=t.getAttribute("data-tab"); detailId=null; gallerySel=null; render(); });
+        t.addEventListener("click", function(){ view=t.getAttribute("data-tab"); detailId=null; render(); });
       });
 
       /* ---------- 添加设备 ---------- */
