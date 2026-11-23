@@ -36,7 +36,7 @@
           (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches);
         if(!standalone) return;
         document.documentElement.classList.add("ios-standalone");
-        var BUILD_V = "56";
+        var BUILD_V = "57";
         try{
           var u = new URL(window.location.href);
           if(u.searchParams.get("v") !== BUILD_V){
@@ -1659,10 +1659,6 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
         if(m==="0x2027") return "pro3";
         return null;
       }
-      function model3DCreditLine(){
-        return "3D 模型来源："+Object.keys(MODELS3D).map(function(k){ return MODELS3D[k].credit; }).join("；")+"。";
-      }
-
       var viewEl=document.getElementById("view");
 
       function recRow(s, showDelete){
@@ -1889,7 +1885,7 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
           + '<button class="btn" type="button" id="btn-restore">恢复备份</button>'
           + '<button class="btn danger" type="button" id="btn-clear">清空全部数据</button></div>'
           + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p>'
-          + '<p class="note">'+model3DCreditLine()+'</p></div>';
+          + '</div>';
 
         featSwapPending=false;
         viewEl.innerHTML=html;
@@ -2170,7 +2166,7 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
           + '<button class="btn" type="button" id="btn-restore">恢复备份</button>'
           + '<button class="btn danger" type="button" id="btn-clear">清空全部数据</button></div>'
           + '<p class="note">记录只保存在这台手机的浏览器里。换手机、换浏览器或清理浏览器数据前，先导出一份备份文件存好，之后用「恢复备份」导回来。</p>'
-          + '<p class="note">'+model3DCreditLine()+'</p></div>';
+          + '</div>';
 
         viewEl.innerHTML=html;
         bindCommon();
